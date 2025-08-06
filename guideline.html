@@ -1,0 +1,200 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>의료 진료 연습 시스템 - 가이드라인</title>
+    <link rel="stylesheet" href="guideline-style.css">
+</head>
+<body>
+    <div class="container">
+        <header>
+            <div class="nav-buttons">
+                <button class="nav-btn home-btn" onclick="window.location.href='index.html'">🏠 홈</button>
+                <button class="nav-btn back-btn" onclick="window.history.back()">← 이전</button>
+            </div>
+            <h1>📋 진료 연습 가이드라인</h1>
+            <p>진료 전 확인사항과 준비사항</p>
+        </header>
+        
+        <div class="content">
+            <!-- 환자가 꼭 말해야 하는 것 -->
+            <div class="guideline-section">
+                <h2>🗣️ 환자 입장에서 꼭 말해야 하는 것</h2>
+                
+                <div class="core-checklist">
+                    <h3>✅ 핵심 체크리스트 (5개)</h3>
+                    <div class="checklist">
+                        <div class="checklist-item">
+                            <input type="checkbox" id="core1" class="check-input">
+                            <label for="core1">어디가 아픈지 구체적인 위치</label>
+                        </div>
+                        <div class="checklist-item">
+                            <input type="checkbox" id="core2" class="check-input">
+                            <label for="core2">언제부터 아픈지 시작 시기</label>
+                        </div>
+                        <div class="checklist-item">
+                            <input type="checkbox" id="core3" class="check-input">
+                            <label for="core3">증상이 얼마나 심한지 강도</label>
+                        </div>
+                        <div class="checklist-item">
+                            <input type="checkbox" id="core4" class="check-input">
+                            <label for="core4">현재 복용 중인 약물</label>
+                        </div>
+                        <div class="checklist-item">
+                            <input type="checkbox" id="core5" class="check-input">
+                            <label for="core5">알레르기 여부</label>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="additional-info">
+                    <h3>💡 그 외 도움이 되는 정보</h3>
+                    <div class="guideline-cards">
+                        <div class="guideline-card">
+                            <div class="guideline-icon">📋</div>
+                            <h4>증상 상세 설명</h4>
+                            <ul>
+                                <li>증상이 계속되는지 지속 시간</li>
+                                <li>증상이 어떻게 변하는지 변화 과정</li>
+                                <li>증상을 악화시키는 요인</li>
+                                <li>증상을 완화시키는 요인</li>
+                            </ul>
+                        </div>
+                        
+                        <div class="guideline-card">
+                            <div class="guideline-icon">💊</div>
+                            <h4>약물 정보</h4>
+                            <ul>
+                                <li>약을 언제부터 먹었는지</li>
+                                <li>약을 먹은 후 증상 변화</li>
+                                <li>약을 먹고 부작용이 있었는지</li>
+                                <li>복용 중인 보조제나 건강기능식품</li>
+                            </ul>
+                        </div>
+                        
+                        <div class="guideline-card">
+                            <div class="guideline-icon">🏥</div>
+                            <h4>과거 병력</h4>
+                            <ul>
+                                <li>비슷한 증상이 있었는지</li>
+                                <li>만성 질환이 있는지</li>
+                                <li>최근 수술이나 입원 경험</li>
+                                <li>가족력 (유전적 질환)</li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- 진료과정 중에 꼭 들어야 하는 것 -->
+            <div class="guideline-section">
+                <h2>👂 진료과정 중에 꼭 들어야 하는 것</h2>
+                
+                <div class="core-checklist">
+                    <h3>✅ 핵심 체크리스트 (5개)</h3>
+                    <div class="checklist">
+                        <div class="checklist-item">
+                            <input type="checkbox" id="listen1" class="check-input">
+                            <label for="listen1">의사의 진단명과 진단 근거</label>
+                        </div>
+                        <div class="checklist-item">
+                            <input type="checkbox" id="listen2" class="check-input">
+                            <label for="listen2">처방약의 이름과 복용 방법</label>
+                        </div>
+                        <div class="checklist-item">
+                            <input type="checkbox" id="listen3" class="check-input">
+                            <label for="listen3">약의 부작용과 주의사항</label>
+                        </div>
+                        <div class="checklist-item">
+                            <input type="checkbox" id="listen4" class="check-input">
+                            <label for="listen4">다음 진료 계획과 재방문 시기</label>
+                        </div>
+                        <div class="checklist-item">
+                            <input type="checkbox" id="listen5" class="check-input">
+                            <label for="listen5">증상 악화 시 언제 다시 와야 하는지</label>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="additional-info">
+                    <h3>💡 그 외 도움이 되는 정보</h3>
+                    <div class="guideline-cards">
+                        <div class="guideline-card">
+                            <div class="guideline-icon">🔍</div>
+                            <h4>진찰 과정</h4>
+                            <ul>
+                                <li>의사의 증상에 대한 구체적인 질문</li>
+                                <li>의사의 진찰 과정과 결과</li>
+                                <li>추가 검사가 필요한지 여부</li>
+                            </ul>
+                        </div>
+                        
+                        <div class="guideline-card">
+                            <div class="guideline-icon">💡</div>
+                            <h4>생활 관리</h4>
+                            <ul>
+                                <li>생활 습관 개선 사항</li>
+                                <li>식이 조절이 필요한지</li>
+                                <li>운동이나 활동 제한 사항</li>
+                                <li>일상생활에서 주의할 점</li>
+                            </ul>
+                        </div>
+                        
+                        <div class="guideline-card">
+                            <div class="guideline-icon">📋</div>
+                            <h4>추가 정보</h4>
+                            <ul>
+                                <li>병원에서 받은 자료나 설명서</li>
+                                <li>응급 상황 발생 시 대처 방법</li>
+                                <li>다른 의료진과의 상담 필요성</li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="guideline-section">
+                <h2>💡 효과적인 진료 대화 팁</h2>
+                <div class="tips">
+                    <div class="tip-item">
+                        <h3>🎤 증상 설명 방법</h3>
+                        <ul>
+                            <li>"머리가 아파요" → "어제부터 머리 뒤쪽이 지속적으로 아파요"</li>
+                            <li>"배가 아파요" → "아침부터 배꼽 주변에 찌르는 듯한 통증이 있어요"</li>
+                            <li>"기침이 나요" → "3일 전부터 마른기침이 나고 밤에 더 심해져요"</li>
+                        </ul>
+                    </div>
+                    
+                    <div class="tip-item">
+                        <h3>💬 의사와의 대화</h3>
+                        <ul>
+                            <li>의사의 질문에 구체적으로 답변하기</li>
+                            <li>궁금한 점이 있으면 적극적으로 질문하기</li>
+                            <li>진단 결과와 처방 내용을 정확히 이해하기</li>
+                            <li>의사가 말한 내용을 다시 한번 확인하기</li>
+                        </ul>
+                    </div>
+                    
+                    <div class="tip-item">
+                        <h3>📝 기억해야 할 것</h3>
+                        <ul>
+                            <li>의사가 말한 진단명과 처방약</li>
+                            <li>약을 언제, 어떻게 먹어야 하는지</li>
+                            <li>다음 진료는 언제 받아야 하는지</li>
+                            <li>증상이 악화되면 언제 다시 와야 하는지</li>
+                            <li>생활에서 주의해야 할 사항</li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <div class="navigation">
+            <button class="nav-btn start-btn" id="startBtn" disabled>진료 연습 시작 →</button>
+        </div>
+    </div>
+    
+    <script src="guideline.js"></script>
+</body>
+</html> 

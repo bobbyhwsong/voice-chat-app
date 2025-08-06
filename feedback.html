@@ -1,0 +1,209 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>의료 진료 연습 시스템 - 피드백</title>
+    <link rel="stylesheet" href="feedback-style.css">
+</head>
+<body>
+    <div class="container">
+        <header>
+            <div class="nav-buttons">
+                <button class="nav-btn home-btn" onclick="window.location.href='index.html'">🏠 홈</button>
+                <button class="nav-btn back-btn" onclick="window.history.back()">← 이전</button>
+            </div>
+            <h1>📊 진료 연습 피드백</h1>
+            <p>대화 분석 및 가이드라인 준수도 평가</p>
+        </header>
+        
+        <div class="content">
+            <div class="feedback-section">
+                <h2>💬 대화 로그</h2>
+                <div class="conversation-log" id="conversationLog">
+                    <!-- 대화 내용이 여기에 표시됩니다 -->
+                </div>
+            </div>
+            
+            <div class="feedback-section">
+                <h2>✅ 가이드라인 준수도 평가</h2>
+                <div class="guideline-evaluation">
+                    <div class="evaluation-category">
+                        <h3>🗣️ 환자 입장에서 꼭 말해야 하는 것 - 핵심 체크리스트</h3>
+                        <div class="evaluation-items">
+                            <div class="evaluation-item" onclick="toggleScoreReason('symptom_location')">
+                                <span class="item-label">어디가 아픈지 구체적인 위치</span>
+                                <div class="score-display">
+                                    <span class="grade-badge" id="symptom_locationGrade">-</span>
+                                    <div class="score-bar">
+                                        <div class="score-fill" id="symptom_locationScore" style="width: 0%"></div>
+                                    </div>
+                                    <span class="score-text" id="symptom_locationText">0%</span>
+                                </div>
+                                <div class="reason-toggle" id="symptom_locationReason" style="display: none;">
+                                    <div class="reason-content" id="symptom_locationReasonText"></div>
+                                </div>
+                            </div>
+                            <div class="evaluation-item" onclick="toggleScoreReason('symptom_timing')">
+                                <span class="item-label">언제부터 아픈지 시작 시기</span>
+                                <div class="score-display">
+                                    <span class="grade-badge" id="symptom_timingGrade">-</span>
+                                    <div class="score-bar">
+                                        <div class="score-fill" id="symptom_timingScore" style="width: 0%"></div>
+                                    </div>
+                                    <span class="score-text" id="symptom_timingText">0%</span>
+                                </div>
+                                <div class="reason-toggle" id="symptom_timingReason" style="display: none;">
+                                    <div class="reason-content" id="symptom_timingReasonText"></div>
+                                </div>
+                            </div>
+                            <div class="evaluation-item" onclick="toggleScoreReason('symptom_severity')">
+                                <span class="item-label">증상이 얼마나 심한지 강도</span>
+                                <div class="score-display">
+                                    <span class="grade-badge" id="symptom_severityGrade">-</span>
+                                    <div class="score-bar">
+                                        <div class="score-fill" id="symptom_severityScore" style="width: 0%"></div>
+                                    </div>
+                                    <span class="score-text" id="symptom_severityText">0%</span>
+                                </div>
+                                <div class="reason-toggle" id="symptom_severityReason" style="display: none;">
+                                    <div class="reason-content" id="symptom_severityReasonText"></div>
+                                </div>
+                            </div>
+                            <div class="evaluation-item" onclick="toggleScoreReason('current_medication')">
+                                <span class="item-label">현재 복용 중인 약물</span>
+                                <div class="score-display">
+                                    <span class="grade-badge" id="current_medicationGrade">-</span>
+                                    <div class="score-bar">
+                                        <div class="score-fill" id="current_medicationScore" style="width: 0%"></div>
+                                    </div>
+                                    <span class="score-text" id="current_medicationText">0%</span>
+                                </div>
+                                <div class="reason-toggle" id="current_medicationReason" style="display: none;">
+                                    <div class="reason-content" id="current_medicationReasonText"></div>
+                                </div>
+                            </div>
+                            <div class="evaluation-item" onclick="toggleScoreReason('allergy_info')">
+                                <span class="item-label">알레르기 여부</span>
+                                <div class="score-display">
+                                    <span class="grade-badge" id="allergy_infoGrade">-</span>
+                                    <div class="score-bar">
+                                        <div class="score-fill" id="allergy_infoScore" style="width: 0%"></div>
+                                    </div>
+                                    <span class="score-text" id="allergy_infoText">0%</span>
+                                </div>
+                                <div class="reason-toggle" id="allergy_infoReason" style="display: none;">
+                                    <div class="reason-content" id="allergy_infoReasonText"></div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="evaluation-category">
+                        <h3>👂 진료과정 중에 꼭 들어야 하는 것 - 핵심 체크리스트</h3>
+                        <div class="evaluation-items">
+                            <div class="evaluation-item" onclick="toggleScoreReason('diagnosis_info')">
+                                <span class="item-label">의사의 진단명과 진단 근거</span>
+                                <div class="score-display">
+                                    <span class="grade-badge" id="diagnosis_infoGrade">-</span>
+                                    <div class="score-bar">
+                                        <div class="score-fill" id="diagnosis_infoScore" style="width: 0%"></div>
+                                    </div>
+                                    <span class="score-text" id="diagnosis_infoText">0%</span>
+                                </div>
+                                <div class="reason-toggle" id="diagnosis_infoReason" style="display: none;">
+                                    <div class="reason-content" id="diagnosis_infoReasonText"></div>
+                                </div>
+                            </div>
+                            <div class="evaluation-item" onclick="toggleScoreReason('prescription_info')">
+                                <span class="item-label">처방약의 이름과 복용 방법</span>
+                                <div class="score-display">
+                                    <span class="grade-badge" id="prescription_infoGrade">-</span>
+                                    <div class="score-bar">
+                                        <div class="score-fill" id="prescription_infoScore" style="width: 0%"></div>
+                                    </div>
+                                    <span class="score-text" id="prescription_infoText">0%</span>
+                                </div>
+                                <div class="reason-toggle" id="prescription_infoReason" style="display: none;">
+                                    <div class="reason-content" id="prescription_infoReasonText"></div>
+                                </div>
+                            </div>
+                            <div class="evaluation-item" onclick="toggleScoreReason('side_effects')">
+                                <span class="item-label">약의 부작용과 주의사항</span>
+                                <div class="score-display">
+                                    <span class="grade-badge" id="side_effectsGrade">-</span>
+                                    <div class="score-bar">
+                                        <div class="score-fill" id="side_effectsScore" style="width: 0%"></div>
+                                    </div>
+                                    <span class="score-text" id="side_effectsText">0%</span>
+                                </div>
+                                <div class="reason-toggle" id="side_effectsReason" style="display: none;">
+                                    <div class="reason-content" id="side_effectsReasonText"></div>
+                                </div>
+                            </div>
+                            <div class="evaluation-item" onclick="toggleScoreReason('followup_plan')">
+                                <span class="item-label">다음 진료 계획과 재방문 시기</span>
+                                <div class="score-display">
+                                    <span class="grade-badge" id="followup_planGrade">-</span>
+                                    <div class="score-bar">
+                                        <div class="score-fill" id="followup_planScore" style="width: 0%"></div>
+                                    </div>
+                                    <span class="score-text" id="followup_planText">0%</span>
+                                </div>
+                                <div class="reason-toggle" id="followup_planReason" style="display: none;">
+                                    <div class="reason-content" id="followup_planReasonText"></div>
+                                </div>
+                            </div>
+                            <div class="evaluation-item" onclick="toggleScoreReason('emergency_plan')">
+                                <span class="item-label">증상 악화 시 언제 다시 와야 하는지</span>
+                                <div class="score-display">
+                                    <span class="grade-badge" id="emergency_planGrade">-</span>
+                                    <div class="score-bar">
+                                        <div class="score-fill" id="emergency_planScore" style="width: 0%"></div>
+                                    </div>
+                                    <span class="score-text" id="emergency_planText">0%</span>
+                                </div>
+                                <div class="reason-toggle" id="emergency_planReason" style="display: none;">
+                                    <div class="reason-content" id="emergency_planReasonText"></div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="feedback-section">
+                <h2>📈 종합 평가</h2>
+                <div class="overall-evaluation">
+                    <div class="overall-score">
+                        <div class="score-circle">
+                            <span class="score-number" id="overallScore">0</span>
+                            <span class="score-label">점</span>
+                        </div>
+                        <div class="score-description">
+                            <h3 id="scoreTitle">평가 중...</h3>
+                            <p id="scoreDescription">AI가 대화 내용을 분석하고 있습니다.</p>
+                        </div>
+                    </div>
+                    
+                    <div class="improvement-tips">
+                        <h3>💡 개선 제안</h3>
+                        <div class="tips-list" id="improvementTips">
+                            <div class="loading-tip">
+                                <div class="loading-spinner"></div>
+                                <span>AI 평가 중...</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <div class="navigation">
+            <button class="nav-btn restart-btn" onclick="window.location.href='retry.html'">피드백 반영해서 연습 진행하기</button>
+        </div>
+    </div>
+    
+    <script src="feedback.js"></script>
+</body>
+</html> 

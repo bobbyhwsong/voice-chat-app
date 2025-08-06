@@ -1,0 +1,85 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>진료 스크립트</title>
+    <link rel="stylesheet" href="cheatsheet-style.css">
+</head>
+<body>
+    <div class="container">
+        <header>
+            <div class="nav-buttons">
+                <button class="nav-btn home-btn" onclick="window.location.href='index.html'">🏠 홈</button>
+                <button class="nav-btn back-btn" onclick="window.history.back()">← 이전</button>
+            </div>
+            <h1>📋 진료 스크립트</h1>
+            <p>실제 진료 중 참고용</p>
+        </header>
+        
+        <div class="content">
+            <div class="cheatsheet-container" id="cheatsheetContainer">
+                <!-- 내가 말할 스크립트 -->
+                <div class="script-section">
+                    <h3>💬 내가 말할 것</h3>
+                    <div class="script-content" id="scriptContent">
+                        <!-- 실제 진료에서 말할 스크립트가 여기에 표시됩니다 -->
+                    </div>
+                </div>
+                
+                <!-- 의사가 물어볼 질문들 -->
+                <div class="script-section">
+                    <h3>❓ 의사가 물어볼 질문들</h3>
+                    <div class="questions-content" id="questionsContent">
+                        <!-- 의사가 물어볼 질문들과 답변 예시가 여기에 표시됩니다 -->
+                    </div>
+                </div>
+                
+                <!-- 내가 물어볼 질문들 -->
+                <div class="script-section">
+                    <h3>🤔 내가 물어볼 질문들</h3>
+                    <div class="my-questions-content" id="myQuestionsContent">
+                        <!-- 의사에게 물어볼 질문들이 여기에 표시됩니다 -->
+                    </div>
+                </div>
+                
+                <!-- 주의사항 -->
+                <div class="script-section">
+                    <h3>⚠️ 주의사항</h3>
+                    <div class="precautions-content" id="precautionsContent">
+                        <!-- 주의사항이 여기에 표시됩니다 -->
+                    </div>
+                </div>
+            </div>
+            
+            <div class="action-buttons">
+                <button class="action-btn copy-btn" onclick="copyCheatsheet()">
+                    📋 전체 복사
+                </button>
+                <button class="action-btn finish-btn" onclick="finishCheatsheet()">
+                    🎉 완료
+                </button>
+            </div>
+        </div>
+    </div>
+    
+    <!-- 완료 팝업 -->
+    <div class="popup-overlay" id="popupOverlay">
+        <div class="popup-content">
+            <div class="popup-icon">🎉</div>
+            <div class="popup-title">완료!</div>
+            <div class="popup-message">
+                진료 스크립트가 준비되었습니다.<br>
+                실제 진료에서도 자신감을 가지고<br>
+                의사와 소통하세요.
+            </div>
+            <div class="popup-buttons">
+                <button class="popup-btn primary" onclick="goHome()">홈으로</button>
+                <button class="popup-btn secondary" onclick="closePopup()">닫기</button>
+            </div>
+        </div>
+    </div>
+    
+    <script src="cheatsheet.js"></script>
+</body>
+</html> 

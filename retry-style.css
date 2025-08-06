@@ -1,0 +1,597 @@
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+body {
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    background: linear-gradient(135deg, #4CAF50 0%, #45a049 100%);
+    min-height: 100vh;
+    padding: 20px;
+}
+
+.container {
+    background: white;
+    border-radius: 20px;
+    box-shadow: 0 20px 40px rgba(0, 0, 0, 0.1);
+    width: 100%;
+    max-width: 1400px;
+    margin: 0 auto;
+    overflow: hidden;
+    display: flex;
+    flex-direction: column;
+    height: 98vh;
+    min-height: 700px;
+}
+
+header {
+    background: linear-gradient(135deg, #4CAF50 0%, #45a049 100%);
+    color: white;
+    padding: 15px 20px;
+    text-align: center;
+    position: relative;
+    flex-shrink: 0;
+}
+
+.nav-buttons {
+    position: absolute;
+    top: 15px;
+    right: 15px;
+    display: flex;
+    gap: 10px;
+}
+
+.nav-btn {
+    padding: 8px 16px;
+    background: rgba(255, 255, 255, 0.2);
+    color: white;
+    border: 1px solid rgba(255, 255, 255, 0.3);
+    border-radius: 20px;
+    font-size: 0.9rem;
+    cursor: pointer;
+    transition: all 0.3s ease;
+}
+
+.nav-btn:hover {
+    background: rgba(255, 255, 255, 0.3);
+    transform: translateY(-1px);
+}
+
+header h1 {
+    font-size: 2rem;
+    margin-bottom: 8px;
+    font-weight: 300;
+}
+
+header p {
+    font-size: 0.9rem;
+    opacity: 0.9;
+    margin: 0;
+}
+
+.main-content {
+    display: grid;
+    grid-template-columns: 2fr 1fr;
+    flex: 1;
+    overflow: hidden;
+    min-height: 0;
+}
+
+/* 채팅 섹션 - 완전히 새로 설계 */
+.chat-section {
+    display: flex;
+    flex-direction: column;
+    border-right: 1px solid #e9ecef;
+    background: #f8f9fa;
+    height: 100%;
+}
+
+/* 채팅 메시지 영역 - 상단에서 입력창까지 확장 */
+.chat-messages {
+    flex: 1;
+    padding: 20px;
+    overflow-y: auto;
+    display: flex;
+    flex-direction: column;
+    gap: 15px;
+    background: white;
+    margin: 5px;
+    border-radius: 10px;
+    border: 1px solid #e9ecef;
+    min-height: 500px;
+}
+
+/* 입력 섹션 - 하단 고정 */
+.input-section {
+    background: white;
+    border-top: 1px solid #e9ecef;
+    flex-shrink: 0;
+    margin-top: auto;
+}
+
+/* 입력 영역 */
+.input-area {
+    padding: 12px 20px;
+    background: white;
+    border-bottom: 1px solid #e9ecef;
+}
+
+.text-input-container {
+    display: flex;
+    gap: 10px;
+    margin-bottom: 10px;
+}
+
+#textInput {
+    flex: 1;
+    padding: 12px 15px;
+    border: 2px solid #e9ecef;
+    border-radius: 25px;
+    font-size: 1rem;
+    outline: none;
+    transition: border-color 0.3s ease;
+}
+
+#textInput:focus {
+    border-color: #4CAF50;
+}
+
+.send-btn {
+    padding: 12px 20px;
+    background: linear-gradient(135deg, #4CAF50 0%, #45a049 100%);
+    color: white;
+    border: none;
+    border-radius: 25px;
+    font-size: 1rem;
+    cursor: pointer;
+    transition: transform 0.2s ease;
+}
+
+.send-btn:hover {
+    transform: translateY(-2px);
+}
+
+.voice-btn {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 10px 20px;
+    background: linear-gradient(135deg, #2196F3 0%, #1976D2 100%);
+    color: white;
+    border: none;
+    border-radius: 25px;
+    font-size: 1rem;
+    cursor: pointer;
+    transition: all 0.3s ease;
+}
+
+.voice-btn:hover {
+    transform: translateY(-2px);
+}
+
+.voice-btn.recording {
+    background: linear-gradient(135deg, #f44336 0%, #d32f2f 100%);
+    animation: pulse 1s infinite;
+}
+
+.mic-icon {
+    font-size: 1.2rem;
+}
+
+.voice-status {
+    font-size: 0.9rem;
+    color: #666;
+    margin-top: 5px;
+}
+
+/* 버튼 영역 - 입력창 바로 아래 */
+.button-area {
+    padding: 10px 20px;
+    background: #f8f9fa;
+    display: flex;
+    gap: 10px;
+    flex-wrap: wrap;
+    justify-content: center;
+}
+
+.clear-btn, .logs-btn, .cheatsheet-btn {
+    padding: 10px 15px;
+    border: none;
+    border-radius: 8px;
+    font-size: 0.9rem;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    display: flex;
+    align-items: center;
+    gap: 5px;
+}
+
+.clear-btn {
+    background: #dc3545;
+    color: white;
+}
+
+.clear-btn:hover {
+    background: #c82333;
+    transform: translateY(-1px);
+}
+
+.logs-btn {
+    background: #17a2b8;
+    color: white;
+}
+
+.logs-btn:hover {
+    background: #138496;
+    transform: translateY(-1px);
+}
+
+.cheatsheet-btn {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    color: white;
+}
+
+.cheatsheet-btn:hover {
+    background: linear-gradient(135deg, #5a6fd8 0%, #6a4190 100%);
+    transform: translateY(-1px);
+}
+
+/* 메시지 스타일 */
+.message {
+    display: flex;
+    flex-direction: column;
+    max-width: 70%;
+    animation: fadeIn 0.3s ease-in;
+}
+
+.user-message {
+    align-self: flex-end;
+}
+
+.bot-message {
+    align-self: flex-start;
+}
+
+.message-content {
+    padding: 15px 20px;
+    border-radius: 20px;
+    font-size: 1rem;
+    line-height: 1.4;
+    word-wrap: break-word;
+}
+
+.user-message .message-content {
+    background: linear-gradient(135deg, #4CAF50 0%, #45a049 100%);
+    color: white;
+    border-bottom-right-radius: 5px;
+}
+
+.bot-message .message-content {
+    background: white;
+    color: #333;
+    border: 1px solid #e0e0e0;
+    border-bottom-left-radius: 5px;
+    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+}
+
+.message-time {
+    font-size: 0.8rem;
+    color: #999;
+    margin-top: 5px;
+    text-align: right;
+}
+
+/* 퀘스트 섹션 */
+.quest-section {
+    background: #f8f9fa;
+    padding: 15px;
+    display: flex;
+    flex-direction: column;
+    overflow-y: auto;
+}
+
+.quest-header {
+    margin-bottom: 15px;
+    text-align: center;
+}
+
+.quest-header h2 {
+    color: #333;
+    margin-bottom: 8px;
+    font-size: 1.3rem;
+}
+
+.quest-header p {
+    color: #666;
+    font-size: 0.85rem;
+    margin: 0;
+}
+
+.quest-list {
+    flex: 1;
+    margin-bottom: 15px;
+}
+
+.quest-item {
+    background: white;
+    border-radius: 8px;
+    padding: 12px;
+    margin-bottom: 8px;
+    border: 2px solid #e9ecef;
+    transition: all 0.3s ease;
+    cursor: pointer;
+}
+
+.quest-item:hover {
+    border-color: #4CAF50;
+    transform: translateY(-2px);
+}
+
+.quest-item.completed {
+    background: #d4edda;
+    border-color: #28a745;
+    opacity: 0.7;
+}
+
+.quest-item.completed .quest-title {
+    text-decoration: line-through;
+    color: #28a745;
+}
+
+.quest-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 8px;
+}
+
+.quest-checkbox {
+    position: relative;
+}
+
+.quest-checkbox input[type="checkbox"] {
+    appearance: none;
+    width: 20px;
+    height: 20px;
+    border: 2px solid #4CAF50;
+    border-radius: 4px;
+    background: white;
+    cursor: pointer;
+    position: relative;
+    transition: all 0.3s ease;
+}
+
+.quest-checkbox input[type="checkbox"]:checked {
+    background: #4CAF50;
+    border-color: #4CAF50;
+}
+
+.quest-checkbox input[type="checkbox"]:checked::after {
+    content: '✓';
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    color: white;
+    font-size: 14px;
+    font-weight: bold;
+}
+
+.grade-badge {
+    display: inline-block;
+    padding: 2px 8px;
+    border-radius: 12px;
+    font-size: 0.8rem;
+    font-weight: bold;
+    margin-left: 8px;
+}
+
+.grade-badge.하 {
+    background: #ff6b6b;
+    color: white;
+}
+
+.grade-badge.중 {
+    background: #ffd93d;
+    color: #333;
+}
+
+.quest-title {
+    font-weight: 600;
+    color: #333;
+    margin-bottom: 5px;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.quest-title .quest-icon {
+    font-size: 1.2rem;
+}
+
+.quest-description {
+    color: #666;
+    font-size: 0.9rem;
+    line-height: 1.4;
+    margin-bottom: 10px;
+}
+
+.improvement-tips {
+    background: #f8f9fa;
+    border-radius: 8px;
+    padding: 12px;
+    margin-top: 10px;
+    border-left: 4px solid #4CAF50;
+}
+
+.improvement-tips h4 {
+    color: #333;
+    margin-bottom: 8px;
+    font-size: 0.95rem;
+    font-weight: 600;
+}
+
+.improvement-tips ul {
+    margin: 0;
+    padding-left: 20px;
+}
+
+.improvement-tips li {
+    color: #555;
+    font-size: 0.85rem;
+    line-height: 1.4;
+    margin-bottom: 5px;
+}
+
+/* 퀘스트 팁 토글 버튼 */
+.quest-tips-toggle {
+    display: flex;
+    align-items: center;
+    gap: 5px;
+    padding: 8px 12px;
+    background: #f8f9fa;
+    border: 1px solid #e9ecef;
+    border-radius: 6px;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    margin-top: 8px;
+    font-size: 0.85rem;
+    color: #666;
+}
+
+.quest-tips-toggle:hover {
+    background: #e9ecef;
+    border-color: #4CAF50;
+    color: #4CAF50;
+}
+
+.toggle-icon {
+    font-size: 1rem;
+}
+
+.toggle-text {
+    font-weight: 500;
+}
+
+/* 퀘스트 팁 내용 */
+.quest-tips-content {
+    margin-top: 10px;
+    animation: slideDown 0.3s ease;
+}
+
+@keyframes slideDown {
+    from {
+        opacity: 0;
+        transform: translateY(-10px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+.quest-progress {
+    margin-bottom: 15px;
+}
+
+.progress-bar {
+    width: 100%;
+    height: 10px;
+    background: #e9ecef;
+    border-radius: 5px;
+    overflow: hidden;
+    margin-bottom: 10px;
+}
+
+.progress-fill {
+    height: 100%;
+    background: linear-gradient(90deg, #4CAF50 0%, #45a049 100%);
+    border-radius: 5px;
+    transition: width 0.5s ease;
+}
+
+.progress-text {
+    text-align: center;
+    font-weight: 600;
+    color: #333;
+    font-size: 0.9rem;
+}
+
+
+
+/* 스크롤바 스타일링 */
+.chat-messages::-webkit-scrollbar {
+    width: 8px;
+}
+
+.chat-messages::-webkit-scrollbar-track {
+    background: #f1f1f1;
+    border-radius: 4px;
+}
+
+.chat-messages::-webkit-scrollbar-thumb {
+    background: #c1c1c1;
+    border-radius: 4px;
+}
+
+.chat-messages::-webkit-scrollbar-thumb:hover {
+    background: #a8a8a8;
+}
+
+/* 애니메이션 */
+@keyframes fadeIn {
+    from { opacity: 0; transform: translateY(10px); }
+    to { opacity: 1; transform: translateY(0); }
+}
+
+@keyframes pulse {
+    0%, 100% { transform: scale(1); }
+    50% { transform: scale(1.05); }
+}
+
+/* 반응형 디자인 */
+@media (max-width: 1200px) {
+    .main-content {
+        grid-template-columns: 1fr;
+        grid-template-rows: 1fr auto;
+    }
+    
+    .quest-section {
+        max-height: 300px;
+    }
+}
+
+@media (max-width: 768px) {
+    .container {
+        height: 98vh;
+        min-height: 600px;
+    }
+    
+    header h1 {
+        font-size: 1.6rem;
+    }
+    
+    .button-area {
+        flex-direction: column;
+        align-items: stretch;
+    }
+    
+    .clear-btn, .logs-btn, .cheatsheet-btn {
+        justify-content: center;
+    }
+    
+    .chat-messages {
+        margin: 3px;
+        padding: 12px;
+        min-height: 400px;
+    }
+    
+    .input-area {
+        padding: 10px 15px;
+    }
+    
+    .quest-section {
+        padding: 10px;
+    }
+} 

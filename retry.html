@@ -1,0 +1,82 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>의료 진료 연습 시스템 - 재연습</title>
+    <link rel="stylesheet" href="retry-style.css">
+</head>
+<body>
+    <div class="container">
+        <header>
+            <div class="nav-buttons">
+                <button class="nav-btn home-btn" onclick="window.location.href='index.html'">🏠 홈</button>
+                <button class="nav-btn back-btn" onclick="window.history.back()">← 이전</button>
+            </div>
+            <h1>🔄 진료 연습 재도전</h1>
+            <p>피드백을 바탕으로 개선된 진료 대화를 연습해보세요!</p>
+        </header>
+        
+        <div class="main-content">
+            <div class="chat-section">
+                <!-- 채팅 메시지 영역 -->
+                <div class="chat-messages" id="chatMessages">
+                    <div class="message bot-message">
+                        <div class="message-content">
+                            안녕하세요, 어떻게 오셨나요?
+                        </div>
+                        <div class="message-time">지금</div>
+                    </div>
+                </div>
+                
+                <!-- 입력 영역 (하단 고정) -->
+                <div class="input-section">
+                    <div class="input-area">
+                        <div class="text-input-container">
+                            <input type="text" id="textInput" placeholder="증상을 설명하거나 의사에게 질문하세요..." />
+                            <button id="voiceBtn" class="voice-btn">
+                                <span class="mic-icon">🎤</span>
+                                <span class="mic-text">음성</span>
+                            </button>
+                            <button id="sendBtn" class="send-btn">전송</button>
+                        </div>
+                        <div class="voice-status" id="voiceStatus"></div>
+                    </div>
+                    
+                    <!-- 버튼 영역 (입력창 바로 아래) -->
+                    <div class="button-area">
+                        <button id="clearBtn" class="clear-btn">🔄 대화 초기화</button>
+                        <button id="viewLogsBtn" class="logs-btn">📋 이전 대화 보기</button>
+                        <button id="cheatsheetBtn" class="cheatsheet-btn" onclick="window.location.href='cheatsheet.html'">📋 치트시트 생성하기</button>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="quest-section">
+                <div class="quest-header">
+                    <h2>🎯 개선 퀘스트</h2>
+                    <p>피드백에서 지적된 항목들을 하나씩 해결해보세요!</p>
+                </div>
+                
+                <div class="quest-list" id="questList">
+                    <!-- 퀘스트 항목들이 여기에 동적으로 추가됩니다 -->
+                </div>
+                
+                <div class="quest-progress">
+                    <div class="progress-bar">
+                        <div class="progress-fill" id="progressFill" style="width: 0%"></div>
+                    </div>
+                    <div class="progress-text">
+                        <span id="completedCount">0</span> / <span id="totalCount">0</span> 완료
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+            </div>
+        </div>
+    </div>
+    
+    <script src="retry.js"></script>
+</body>
+</html> 

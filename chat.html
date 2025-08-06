@@ -1,0 +1,57 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>음성 채팅 인터페이스</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <div class="container">
+        <header>
+            <div class="nav-buttons">
+                <button class="nav-btn home-btn" onclick="window.location.href='index.html'">🏠 홈</button>
+                <button class="nav-btn back-btn" onclick="window.history.back()">← 이전</button>
+            </div>
+            <h1>🏥 의료 진료 연습 시스템</h1>
+            <p>음성으로 의사와 진료 대화를 연습하세요!</p>
+        </header>
+        
+        <div class="chat-container">
+            <div class="chat-messages" id="chatMessages">
+                <div class="message bot-message">
+                    <div class="message-content">
+                        안녕하세요, 어떻게 오셨나요?
+                    </div>
+                    <div class="message-time">지금</div>
+                </div>
+            </div>
+            
+            <div class="input-area">
+                <div class="text-input-container">
+                    <input type="text" id="textInput" placeholder="증상을 설명하거나 의사에게 질문하세요..." />
+                    <button id="voiceBtn" class="voice-btn">
+                        <span class="mic-icon">🎤</span>
+                        <span class="mic-text">음성</span>
+                    </button>
+                    <button id="sendBtn" class="send-btn">전송</button>
+                </div>
+                
+                <div class="voice-status" id="voiceStatus"></div>
+            </div>
+        </div>
+        
+        <div class="settings">
+            <div class="setting-group" style="display: none;">
+                <label>음성: ElevenLabs 50대 남성 의사</label>
+            </div>
+            <div class="setting-group">
+                <button id="clearBtn" class="clear-btn">🔄</button>
+                <button id="feedbackBtn" class="feedback-btn" onclick="window.location.href='feedback.html'">피드백 보기</button>
+            </div>
+        </div>
+    </div>
+    
+    <script src="script.js"></script>
+</body>
+</html> 

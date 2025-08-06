@@ -1,0 +1,345 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>의료 진료 연습 시스템</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #4CAF50 0%, #45a049 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        .container {
+            background: white;
+            border-radius: 20px;
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.1);
+            max-width: 1200px;
+            margin: 0 auto;
+            overflow: hidden;
+        }
+
+        header {
+            background: linear-gradient(135deg, #4CAF50 0%, #45a049 100%);
+            color: white;
+            padding: 30px;
+            text-align: center;
+        }
+
+        header h1 {
+            font-size: 2.5rem;
+            margin-bottom: 10px;
+            font-weight: 300;
+        }
+
+        header p {
+            font-size: 1.1rem;
+            opacity: 0.9;
+        }
+
+        .content {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 40px;
+            padding: 40px;
+        }
+
+        .research-info h2 {
+            color: #333;
+            margin-bottom: 30px;
+            font-size: 1.8rem;
+        }
+
+        .info-section {
+            margin-bottom: 25px;
+        }
+
+        .info-section h3 {
+            color: #4CAF50;
+            margin-bottom: 10px;
+            font-size: 1.2rem;
+        }
+
+        .info-section p {
+            color: #666;
+            line-height: 1.6;
+            margin-bottom: 15px;
+        }
+
+        .info-section ul {
+            color: #666;
+            line-height: 1.6;
+            padding-left: 20px;
+        }
+
+        .info-section li {
+            margin-bottom: 8px;
+        }
+
+        .login-form {
+            background: #f8f9fa;
+            border-radius: 15px;
+            padding: 30px;
+            border: 2px solid #e9ecef;
+        }
+
+        .login-form h3 {
+            color: #333;
+            margin-bottom: 25px;
+            font-size: 1.5rem;
+            text-align: center;
+        }
+
+        .form-group {
+            margin-bottom: 20px;
+        }
+
+        .form-group label {
+            display: block;
+            margin-bottom: 8px;
+            color: #333;
+            font-weight: 500;
+        }
+
+        .form-group input,
+        .form-group select {
+            width: 100%;
+            padding: 12px;
+            border: 2px solid #e9ecef;
+            border-radius: 8px;
+            font-size: 1rem;
+            transition: border-color 0.3s ease;
+        }
+
+        .form-group input:focus,
+        .form-group select:focus,
+        .form-group textarea:focus {
+            outline: none;
+            border-color: #4CAF50;
+        }
+
+        .form-group textarea {
+            resize: vertical;
+            min-height: 150px;
+            width: 100%;
+            font-size: 1.1rem;
+        }
+
+        .checkbox-group label {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            cursor: pointer;
+        }
+
+        .checkbox-group input[type="checkbox"] {
+            width: auto;
+            margin: 0;
+        }
+
+        .submit-btn {
+            width: 100%;
+            padding: 15px;
+            background: linear-gradient(135deg, #4CAF50 0%, #45a049 100%);
+            color: white;
+            border: none;
+            border-radius: 10px;
+            font-size: 1.1rem;
+            font-weight: 500;
+            cursor: pointer;
+            transition: transform 0.2s ease;
+        }
+
+        .submit-btn:hover {
+            transform: translateY(-2px);
+        }
+
+        .nav-buttons {
+            position: absolute;
+            top: 20px;
+            right: 20px;
+            display: flex;
+            gap: 10px;
+        }
+
+        .nav-btn {
+            padding: 8px 16px;
+            background: rgba(255, 255, 255, 0.2);
+            color: white;
+            border: 1px solid rgba(255, 255, 255, 0.3);
+            border-radius: 20px;
+            font-size: 0.9rem;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .nav-btn:hover {
+            background: rgba(255, 255, 255, 0.3);
+            transform: translateY(-1px);
+        }
+
+        header {
+            position: relative;
+        }
+
+        /* 반응형 디자인 */
+        @media (max-width: 768px) {
+            .content {
+                grid-template-columns: 1fr;
+                gap: 30px;
+                padding: 20px;
+            }
+            
+            header h1 {
+                font-size: 2rem;
+            }
+            
+            .research-info h2 {
+                font-size: 1.5rem;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header>
+            <div class="nav-buttons">
+                <button class="nav-btn home-btn" onclick="window.location.href='index.html'">🏠 홈</button>
+            </div>
+            <h1>🏥 의료 진료 연습 시스템</h1>
+            <p>AI 의사와의 진료 대화 연습</p>
+        </header>
+        
+        <div class="content">
+            <div class="research-info">
+                <h2>시스템 안내</h2>
+                <div class="info-section">
+                    <h3>📋 시스템 목적</h3>
+                    <p>이 시스템은 AI 의사와의 진료 대화 연습을 통해 의사소통 능력을 향상시키는 것을 목적으로 합니다. 진료과정 체크리스트를 확인하고, 의사 페르소나와 대화할 수 있으며, 피드백을 받을 수 있습니다.</p>
+                </div>
+                
+                <div class="info-section">
+                    <h3>🎯 시스템 기능</h3>
+                    <ul>
+                        <li>진료과정 체크리스트 확인</li>
+                        <li>AI 의사 페르소나와 실시간 대화</li>
+                        <li>진료 대화에 대한 즉시 피드백</li>
+                        <li>실제 진료에서 참고할 수 있는 맞춤형 치트시트 생성</li>
+                    </ul>
+                </div>
+                
+                <div class="info-section">
+                    <h3>⏱️ 사용 시간</h3>
+                    <p>약 10-15분 정도 소요됩니다.</p>
+                </div>
+                
+                <div class="info-section">
+                    <h3>💡 치트시트 활용</h3>
+                    <p>대화 연습 후 생성되는 치트시트는 실제 진료에서 의사와의 소통에 도움이 되는 스크립트를 제공합니다. 이를 통해 더 자신감 있고 효과적인 의사소통이 가능합니다.</p>
+                </div>
+            </div>
+            
+            <div class="login-form">
+                <h3>참여자 정보 입력</h3>
+                <form id="loginForm">
+                    <div class="form-group">
+                        <label for="participantId">참여자 ID *</label>
+                        <input type="text" id="participantId" name="participantId" required placeholder="예: P001">
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="symptoms">현재 아픈 증상 설명 *</label>
+                        <textarea id="symptoms" name="symptoms" required placeholder="예: 머리가 아파요, 어제부터 머리 뒤쪽이 지속적으로 아파요"></textarea>
+                    </div>
+                    
+                    <div class="form-group checkbox-group">
+                        <label>
+                            <input type="checkbox" id="consent" name="consent" required>
+                            연구 참여에 동의합니다 *
+                        </label>
+                    </div>
+                    
+                    <button type="submit" class="submit-btn">시스템 사용 시작하기</button>
+                </form>
+            </div>
+        </div>
+    </div>
+    
+    <script>
+        class LoginManager {
+            constructor() {
+                this.form = document.getElementById('loginForm');
+                this.bindEvents();
+            }
+
+            bindEvents() {
+                this.form.addEventListener('submit', (e) => this.handleSubmit(e));
+            }
+
+            handleSubmit(event) {
+                event.preventDefault();
+                
+                const formData = new FormData(this.form);
+                const userData = {
+                    participantId: formData.get('participantId'),
+                    symptoms: formData.get('symptoms'),
+                    consent: formData.get('consent') === 'on',
+                    loginTime: new Date().toISOString()
+                };
+                
+                // 필수 필드 검증
+                if (!userData.participantId || !userData.symptoms || !userData.consent) {
+                    this.showError('참여자 ID, 증상 설명, 연구 참여 동의를 모두 입력해주세요.');
+                    return;
+                }
+                
+                // 증상 정보를 서버에 전송
+                this.saveUserData(userData);
+            }
+
+            async saveUserData(userData) {
+                try {
+                    const response = await fetch('http://localhost:5000/api/save-user-data', {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                        },
+                        body: JSON.stringify(userData)
+                    });
+
+                    if (response.ok) {
+                        // 로컬 스토리지에 저장
+                        localStorage.setItem('userData', JSON.stringify(userData));
+                        localStorage.setItem('participantId', userData.participantId);
+                        
+                        // 가이드라인 페이지로 이동
+                        window.location.href = 'guideline.html';
+                    } else {
+                        this.showError('서버 연결에 실패했습니다. 다시 시도해주세요.');
+                    }
+                } catch (error) {
+                    console.error('Error saving user data:', error);
+                    this.showError('서버 연결에 실패했습니다. 다시 시도해주세요.');
+                }
+            }
+
+            showError(message) {
+                alert(message);
+            }
+        }
+
+        // 페이지 로드 시 초기화
+        document.addEventListener('DOMContentLoaded', () => {
+            new LoginManager();
+        });
+    </script>
+</body>
+</html> 
