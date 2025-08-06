@@ -22,7 +22,7 @@ class FeedbackManager {
             const participantId = userData.participantId || null;
             
             // 대화 로그 가져오기
-            const response = await fetch(`http://localhost:5000/api/logs?participant_id=${participantId || ''}`);
+            const response = await fetch(`http://localhost:5001/api/logs?participant_id=${participantId || ''}`);
             const data = await response.json();
             
             if (data.status === 'success' && data.logs.length > 0) {
@@ -100,7 +100,7 @@ class FeedbackManager {
             const participantId = userData.participantId || null;
             
             // LLM 평가 API 호출 - 구체적인 대화로그 기반 평가 요청
-            const response = await fetch('http://localhost:5000/api/evaluate', {
+            const response = await fetch('http://localhost:5001/api/evaluate', {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',

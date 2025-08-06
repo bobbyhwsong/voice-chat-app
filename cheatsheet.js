@@ -27,7 +27,7 @@ async function generateDynamicCheatsheet() {
         showLoadingState();
         
         // LLM API 호출
-        const response = await fetch('http://localhost:5000/api/generate-cheatsheet', {
+        const response = await fetch('http://localhost:5001/api/generate-cheatsheet', {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json',

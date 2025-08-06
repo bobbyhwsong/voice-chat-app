@@ -921,4 +921,8 @@ if __name__ == '__main__':
     if OPENAI_API_KEY == 'your-api-key-here':
         logger.warning("OpenAI API 키가 설정되지 않았습니다. 환경변수 OPENAI_API_KEY를 설정하거나 app.py에서 직접 설정하세요.")
     
-    app.run(host='0.0.0.0', port=5000, debug=True) 
+    # 포트 설정 (환경변수에서 가져오거나 기본값 사용)
+    port = int(os.getenv('FLASK_PORT', 5000))
+    logger.info(f"서버가 포트 {port}에서 시작됩니다.")
+    
+    app.run(host='0.0.0.0', port=port, debug=True) 

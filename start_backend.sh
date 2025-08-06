@@ -1,14 +1,13 @@
 #!/bin/bash
 
-# Voice Chat App 실행 스크립트
-# 이 스크립트는 conda 환경을 설정하고 프로젝트를 실행합니다.
+# Voice Chat App 백엔드 서버 실행 스크립트
 
-echo "🚀 Voice Chat App 실행 스크립트"
+echo "🚀 Voice Chat App 백엔드 서버 시작"
 echo "================================"
 
 # 1. conda 환경 활성화
 echo "📋 1단계: conda 환경 활성화"
-source ~/anaconda3/etc/profile.d/conda.sh
+source /opt/anaconda3/etc/profile.d/conda.sh
 conda activate voice-chat-app
 
 if [ $? -ne 0 ]; then
@@ -20,14 +19,9 @@ fi
 
 echo "✅ conda 환경 활성화 완료: voice-chat-app"
 
-# 2. 필요한 패키지 설치 확인
+# 2. 환경변수 설정
 echo ""
-echo "📋 2단계: 패키지 설치 확인"
-pip install -r requirements.txt
-
-# 3. 환경변수 파일 확인
-echo ""
-echo "📋 3단계: 환경변수 설정"
+echo "📋 2단계: 환경변수 설정"
 
 # .env 파일이 있는지 확인
 if [ -f ".env" ]; then
@@ -56,11 +50,27 @@ fi
 
 echo "✅ API 키 설정 완료"
 
-# 4. 서버 실행
+# 3. 포트 확인 및 설정
 echo ""
-echo "📋 4단계: Flask 서버 실행"
-echo "🌐 서버가 시작되면 브라우저에서 http://localhost:5000 으로 접속하세요"
+echo "📋 3단계: 포트 확인 및 설정"
+
+# 포트 5000이 사용 중이면 5001 사용
+if lsof -Pi :5000 -sTCP:LISTEN -t >/dev/null ; then
+    echo "⚠️ 포트 5000이 사용 중입니다. 포트 5001을 사용합니다."
+    export FLASK_PORT=5001
+    echo "✅ 포트 5001 사용"
+else
+    echo "✅ 포트 5000 사용 가능"
+    export FLASK_PORT=5000
+fi
+
+# 4. 백엔드 서버 실행
+echo ""
+echo "📋 4단계: Flask 백엔드 서버 실행"
+echo "🌐 백엔드 서버: http://localhost:$FLASK_PORT"
+echo "📊 API 엔드포인트: http://localhost:$FLASK_PORT/api/*"
 echo "⏹️  서버를 중지하려면 Ctrl+C를 누르세요"
 echo ""
 
+# 이제 python 명령어가 conda 환경의 Python을 가리킴
 python app.py 

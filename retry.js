@@ -173,7 +173,7 @@ class RetryChatInterface {
             const userData = JSON.parse(localStorage.getItem('userData') || '{}');
             const participantId = userData.participantId || null;
             
-            const response = await fetch('http://localhost:5000/api/chat', {
+            const response = await fetch('http://localhost:5001/api/chat', {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
@@ -216,7 +216,7 @@ class RetryChatInterface {
         this.stopCurrentAudio();
         
         try {
-            const response = await fetch('http://localhost:5000/api/tts', {
+            const response = await fetch('http://localhost:5001/api/tts', {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
@@ -325,7 +325,7 @@ class RetryChatInterface {
         }
         
         try {
-            await fetch('http://localhost:5000/api/clear', {
+            await fetch('http://localhost:5001/api/clear', {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
@@ -350,7 +350,7 @@ class RetryChatInterface {
             const userData = JSON.parse(localStorage.getItem('userData') || '{}');
             const participantId = userData.participantId || null;
             
-            const response = await fetch(`http://localhost:5000/api/logs?participant_id=${participantId || ''}`);
+            const response = await fetch(`http://localhost:5001/api/logs?participant_id=${participantId || ''}`);
             const data = await response.json();
             
             if (data.status === 'success') {
@@ -416,7 +416,7 @@ class RetryChatInterface {
             }
 
             // 피드백 데이터 가져오기
-            const response = await fetch(`http://localhost:5000/api/feedback?participant_id=${participantId}`);
+            const response = await fetch(`http://localhost:5001/api/feedback?participant_id=${participantId}`);
             const data = await response.json();
             
             if (data.status === 'success' && data.feedback_data.length > 0) {
@@ -730,7 +730,7 @@ class RetryChatInterface {
             }
             
             // LLM에게 퀘스트 완료 여부 분석 요청
-            const response = await fetch('http://localhost:5000/api/analyze-quest', {
+            const response = await fetch('http://localhost:5001/api/analyze-quest', {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',

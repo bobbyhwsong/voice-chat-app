@@ -192,7 +192,7 @@ class VoiceChatInterface {
             const participantId = userData.participantId || null;
             
             // LLM API 호출
-            const response = await fetch('http://localhost:5000/api/chat', {
+            const response = await fetch('http://localhost:5001/api/chat', {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
@@ -241,7 +241,7 @@ class VoiceChatInterface {
             const userData = JSON.parse(localStorage.getItem('userData') || '{}');
             const participantId = userData.participantId || localStorage.getItem('participantId');
             
-            const response = await fetch('http://localhost:5000/api/tts', {
+            const response = await fetch('http://localhost:5001/api/tts', {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
@@ -256,7 +256,7 @@ class VoiceChatInterface {
             
             if (data.status === 'success') {
                 // 오디오 파일 재생
-                const audio = new Audio(`http://localhost:5000${data.audio_url}`);
+                const audio = new Audio(`http://localhost:5001${data.audio_url}`);
                 audio.volume = 1.0;
                 
                 // 현재 오디오 추적
@@ -303,7 +303,7 @@ class VoiceChatInterface {
             const userData = JSON.parse(localStorage.getItem('userData') || '{}');
             const participantId = userData.participantId || localStorage.getItem('participantId');
             
-            const response = await fetch('http://localhost:5000/api/tts', {
+            const response = await fetch('http://localhost:5001/api/tts', {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
@@ -318,7 +318,7 @@ class VoiceChatInterface {
             
             if (data.status === 'success') {
                 // 오디오 파일 준비
-                const audio = new Audio(`http://localhost:5000${data.audio_url}`);
+                const audio = new Audio(`http://localhost:5001${data.audio_url}`);
                 audio.volume = 1.0;
                 
                 // 현재 오디오 추적
@@ -434,7 +434,7 @@ class VoiceChatInterface {
         
         try {
             // 서버에 대화 초기화 요청
-            await fetch('http://localhost:5000/api/clear', {
+            await fetch('http://localhost:5001/api/clear', {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
@@ -462,7 +462,7 @@ class VoiceChatInterface {
             const userData = JSON.parse(localStorage.getItem('userData') || '{}');
             const participantId = userData.participantId || null;
             
-            const response = await fetch(`http://localhost:5000/api/logs?participant_id=${participantId || ''}`);
+            const response = await fetch(`http://localhost:5001/api/logs?participant_id=${participantId || ''}`);
             const data = await response.json();
             
             if (data.status === 'success') {
