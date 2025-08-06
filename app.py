@@ -7,6 +7,10 @@ import json
 import requests
 import re
 from datetime import datetime
+from dotenv import load_dotenv
+
+# .env 파일 로드
+load_dotenv()
 
 # 로깅 설정
 logging.basicConfig(level=logging.INFO)
@@ -80,6 +84,7 @@ def generate_elevenlabs_audio(text):
             "text": text,
             "model_id": "eleven_multilingual_v2",
             "voice_settings": {
+                "speed": 1.3,
                 "stability": 0.5,
                 "similarity_boost": 0.5,
                 "style": 0.0,
@@ -356,7 +361,10 @@ def evaluate_conversation():
         participant_id = data.get('participant_id', None)
         evaluation_type = data.get('evaluation_type', 'conversation_based')
         
+        logger.info(f"평가 요청 받음 - 참여자: {participant_id}, 로그 개수: {len(logs)}, 평가 타입: {evaluation_type}")
+        
         if not logs:
+            logger.warning("평가할 대화 로그가 없습니다.")
             return jsonify({'error': '평가할 대화 로그가 없습니다.'}), 400
         
         # 대화 내용을 하나의 텍스트로 결합
@@ -364,6 +372,9 @@ def evaluate_conversation():
         for log in logs:
             conversation_text += f"환자: {log['user_message']}\n"
             conversation_text += f"의사: {log['bot_response']}\n\n"
+        
+        logger.info(f"대화 텍스트 생성 완료 - 길이: {len(conversation_text)} 문자")
+        logger.info(f"대화 내용 미리보기: {conversation_text[:200]}...")
         
         # LLM 평가 프롬프트 (구체적인 대화로그 기반 평가)
         evaluation_prompt = f"""<Instruction> 너는 환자의 대화 내용 평가 챗봇이야. Conversation Text 중 환자가 한 말을 Evaluation Criteria를 기준으로 Evaluation Score를 매겨줘.
@@ -438,6 +449,7 @@ def evaluate_conversation():
 """
         
         # LLM 호출
+        logger.info("LLM 평가 요청 시작...")
         response = openai.ChatCompletion.create(
             model="gpt-4o",
             messages=[
@@ -449,29 +461,40 @@ def evaluate_conversation():
         )
         
         evaluation_result = response.choices[0].message.content
+        logger.info(f"LLM 평가 응답 받음 - 길이: {len(evaluation_result)} 문자")
+        logger.info(f"LLM 응답 미리보기: {evaluation_result[:300]}...")
         
         try:
             # JSON 파싱 - 코드 블록 제거
             cleaned_result = clean_json_response(evaluation_result)
+            logger.info(f"JSON 정리 완료 - 길이: {len(cleaned_result)} 문자")
+            logger.info(f"정리된 JSON 미리보기: {cleaned_result[:300]}...")
+            
             evaluation_data = json.loads(cleaned_result)
+            logger.info(f"JSON 파싱 성공 - 평가 항목 수: {len(evaluation_data.get('grades', {}))}")
             
             # grades를 scores로 변환 (하위 호환성을 위해)
             if 'grades' in evaluation_data:
                 evaluation_data['scores'] = evaluation_data['grades']
+                logger.info("grades를 scores로 변환 완료")
             
             # 상/중/하를 점수로 변환 (하위 호환성을 위해)
             converted_scores = {}
             for key, grade in evaluation_data['scores'].items():
                 converted_scores[key] = convert_grade_to_score(grade)
             
+            logger.info(f"점수 변환 완료 - 변환된 점수: {converted_scores}")
+            
             # 전체 점수 계산 (상/중/하 개수 기반)
             overall_score = calculate_overall_score_from_grades(evaluation_data['scores'])
+            logger.info(f"전체 점수 계산 완료: {overall_score}점")
             
             # 변환된 점수와 원본 등급을 모두 포함
             evaluation_data['converted_scores'] = converted_scores
             evaluation_data['overall_score'] = overall_score
             
             logger.info(f"대화 평가 완료: {participant_id}")
+            logger.info(f"최종 평가 데이터: {json.dumps(evaluation_data, ensure_ascii=False, indent=2)}")
             
             # 평가 결과를 사용자별 폴더에 저장
             if participant_id:
@@ -490,6 +513,9 @@ def evaluate_conversation():
                     json.dump(feedback_data, f, ensure_ascii=False, indent=2)
                 
                 logger.info(f"피드백 데이터 저장됨: {feedback_filepath}")
+                logger.info(f"저장된 피드백 데이터 크기: {len(json.dumps(feedback_data, ensure_ascii=False))} 문자")
+            else:
+                logger.warning("참여자 ID가 없어서 피드백 데이터를 저장하지 않습니다.")
             
             return jsonify({
                 'status': 'success',
@@ -510,7 +536,10 @@ def get_feedback():
         participant_id = request.args.get('participant_id', None)
         date = request.args.get('date', datetime.now().strftime('%Y%m%d'))
         
+        logger.info(f"피드백 조회 요청 - 참여자: {participant_id}, 날짜: {date}")
+        
         if not participant_id:
+            logger.warning("참여자 ID가 없습니다.")
             return jsonify({'error': '참여자 ID가 필요합니다.'}), 400
         
         user_dir = create_user_directory(participant_id)
@@ -522,11 +551,15 @@ def get_feedback():
                 if filename.startswith('feedback_') and filename.endswith('.json'):
                     feedback_files.append(filename)
         
+        logger.info(f"찾은 피드백 파일들: {feedback_files}")
+        
         # 날짜별로 필터링
         filtered_files = []
         for filename in feedback_files:
             if date in filename:
                 filtered_files.append(filename)
+        
+        logger.info(f"날짜 필터링 후 파일들: {filtered_files}")
         
         feedback_data = []
         for filename in filtered_files:
@@ -535,8 +568,11 @@ def get_feedback():
                 with open(filepath, 'r', encoding='utf-8') as f:
                     data = json.load(f)
                     feedback_data.append(data)
+                logger.info(f"피드백 파일 읽기 성공: {filename}")
             except Exception as e:
                 logger.error(f"피드백 파일 읽기 오류: {filepath}, {str(e)}")
+        
+        logger.info(f"총 {len(feedback_data)}개의 피드백 데이터를 반환합니다.")
         
         return jsonify({
             'status': 'success',
@@ -548,6 +584,115 @@ def get_feedback():
     except Exception as e:
         logger.error(f"피드백 조회 오류: {str(e)}")
         return jsonify({'error': '피드백 조회 중 오류가 발생했습니다.'}), 500
+
+@app.route('/api/debug/logs', methods=['GET'])
+def debug_logs():
+    """디버깅용 로그 파일 목록 조회"""
+    try:
+        participant_id = request.args.get('participant_id', None)
+        
+        logger.info(f"디버그 로그 조회 요청 - 참여자: {participant_id}")
+        
+        if participant_id:
+            user_dir = create_user_directory(participant_id)
+            if os.path.exists(user_dir):
+                files = os.listdir(user_dir)
+                logger.info(f"사용자 디렉토리 파일들: {files}")
+                
+                file_info = []
+                for filename in files:
+                    filepath = os.path.join(user_dir, filename)
+                    try:
+                        stat = os.stat(filepath)
+                        file_info.append({
+                            'filename': filename,
+                            'size': stat.st_size,
+                            'modified': datetime.fromtimestamp(stat.st_mtime).isoformat(),
+                            'type': 'json' if filename.endswith('.json') else 'other'
+                        })
+                    except Exception as e:
+                        logger.error(f"파일 정보 읽기 오류: {filename}, {str(e)}")
+                
+                return jsonify({
+                    'status': 'success',
+                    'participant_id': participant_id,
+                    'files': file_info
+                })
+            else:
+                return jsonify({
+                    'status': 'success',
+                    'participant_id': participant_id,
+                    'files': [],
+                    'message': '사용자 디렉토리가 존재하지 않습니다.'
+                })
+        else:
+            # 전체 로그 디렉토리 정보
+            if os.path.exists(LOG_DIR):
+                users = [d for d in os.listdir(LOG_DIR) if os.path.isdir(os.path.join(LOG_DIR, d))]
+                logger.info(f"전체 사용자 디렉토리: {users}")
+                
+                return jsonify({
+                    'status': 'success',
+                    'log_directory': LOG_DIR,
+                    'users': users,
+                    'message': '참여자 ID를 지정하면 해당 사용자의 파일 목록을 볼 수 있습니다.'
+                })
+            else:
+                return jsonify({
+                    'status': 'error',
+                    'message': '로그 디렉토리가 존재하지 않습니다.'
+                })
+                
+    except Exception as e:
+        logger.error(f"디버그 로그 조회 오류: {str(e)}")
+        return jsonify({'error': '디버그 로그 조회 중 오류가 발생했습니다.'}), 500
+
+@app.route('/api/debug/log-content', methods=['GET'])
+def debug_log_content():
+    """디버깅용 로그 파일 내용 조회"""
+    try:
+        participant_id = request.args.get('participant_id', None)
+        filename = request.args.get('filename', None)
+        
+        logger.info(f"로그 내용 조회 요청 - 참여자: {participant_id}, 파일: {filename}")
+        
+        if not participant_id or not filename:
+            return jsonify({'error': '참여자 ID와 파일명이 필요합니다.'}), 400
+        
+        user_dir = create_user_directory(participant_id)
+        filepath = os.path.join(user_dir, filename)
+        
+        if os.path.exists(filepath):
+            try:
+                with open(filepath, 'r', encoding='utf-8') as f:
+                    content = f.read()
+                
+                # JSON 파일인 경우 파싱 시도
+                try:
+                    json_content = json.loads(content)
+                    return jsonify({
+                        'status': 'success',
+                        'filename': filename,
+                        'content': json_content,
+                        'is_json': True
+                    })
+                except json.JSONDecodeError:
+                    return jsonify({
+                        'status': 'success',
+                        'filename': filename,
+                        'content': content,
+                        'is_json': False
+                    })
+                    
+            except Exception as e:
+                logger.error(f"파일 읽기 오류: {filepath}, {str(e)}")
+                return jsonify({'error': f'파일 읽기 오류: {str(e)}'}), 500
+        else:
+            return jsonify({'error': '파일을 찾을 수 없습니다.'}), 404
+            
+    except Exception as e:
+        logger.error(f"로그 내용 조회 오류: {str(e)}")
+        return jsonify({'error': '로그 내용 조회 중 오류가 발생했습니다.'}), 500
 
 @app.route('/api/generate-cheatsheet', methods=['POST'])
 def generate_cheatsheet():
@@ -922,7 +1067,7 @@ if __name__ == '__main__':
         logger.warning("OpenAI API 키가 설정되지 않았습니다. 환경변수 OPENAI_API_KEY를 설정하거나 app.py에서 직접 설정하세요.")
     
     # 포트 설정 (환경변수에서 가져오거나 기본값 사용)
-    port = int(os.getenv('FLASK_PORT', 5000))
+    port = int(os.getenv('FLASK_PORT', 5001))
     logger.info(f"서버가 포트 {port}에서 시작됩니다.")
     
     app.run(host='0.0.0.0', port=port, debug=True) 

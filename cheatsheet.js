@@ -27,7 +27,10 @@ async function generateDynamicCheatsheet() {
         showLoadingState();
         
         // LLM API 호출
-        const response = await fetch('http://localhost:5001/api/generate-cheatsheet', {
+                    // API URL 동적 설정
+            const apiBaseUrl = window.API_BASE_URL || 'http://localhost:5001';
+            
+            const response = await fetch(`${apiBaseUrl}/api/generate-cheatsheet`, {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json',

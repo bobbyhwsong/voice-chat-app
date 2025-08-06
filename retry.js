@@ -10,6 +10,10 @@ class RetryChatInterface {
         this.synthesis = window.speechSynthesis;
         this.quests = [];
         this.completedQuests = new Set();
+        
+        // API URL 동적 설정
+        this.apiBaseUrl = window.API_BASE_URL || 'http://localhost:5001';
+        
         this.loadQuestsFromFeedback();
     }
 
@@ -173,7 +177,7 @@ class RetryChatInterface {
             const userData = JSON.parse(localStorage.getItem('userData') || '{}');
             const participantId = userData.participantId || null;
             
-            const response = await fetch('http://localhost:5001/api/chat', {
+            const response = await fetch(`${this.apiBaseUrl}/api/chat`, {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
@@ -216,18 +220,25 @@ class RetryChatInterface {
         this.stopCurrentAudio();
         
         try {
-            const response = await fetch('http://localhost:5001/api/tts', {
+            // 사용자 ID 가져오기
+            const userData = JSON.parse(localStorage.getItem('userData') || '{}');
+            const participantId = userData.participantId || null;
+            
+            const response = await fetch(`${this.apiBaseUrl}/api/tts`, {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
                 },
-                body: JSON.stringify({ text })
+                body: JSON.stringify({ 
+                    text,
+                    participant_id: participantId
+                })
             });
 
             const data = await response.json();
             
             if (data.status === 'success') {
-                const audio = new Audio(`http://localhost:5000${data.audio_url}`);
+                const audio = new Audio(`${this.apiBaseUrl}${data.audio_url}`);
                 this.currentAudio = audio; // 현재 오디오 추적
                 
                 audio.onended = () => {
@@ -325,7 +336,7 @@ class RetryChatInterface {
         }
         
         try {
-            await fetch('http://localhost:5001/api/clear', {
+            await fetch(`${this.apiBaseUrl}/api/clear`, {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
@@ -350,7 +361,7 @@ class RetryChatInterface {
             const userData = JSON.parse(localStorage.getItem('userData') || '{}');
             const participantId = userData.participantId || null;
             
-            const response = await fetch(`http://localhost:5001/api/logs?participant_id=${participantId || ''}`);
+            const response = await fetch(`${this.apiBaseUrl}/api/logs?participant_id=${participantId || ''}`);
             const data = await response.json();
             
             if (data.status === 'success') {
@@ -416,7 +427,7 @@ class RetryChatInterface {
             }
 
             // 피드백 데이터 가져오기
-            const response = await fetch(`http://localhost:5001/api/feedback?participant_id=${participantId}`);
+            const response = await fetch(`${this.apiBaseUrl}/api/feedback?participant_id=${participantId}`);
             const data = await response.json();
             
             if (data.status === 'success' && data.feedback_data.length > 0) {
@@ -730,7 +741,7 @@ class RetryChatInterface {
             }
             
             // LLM에게 퀘스트 완료 여부 분석 요청
-            const response = await fetch('http://localhost:5001/api/analyze-quest', {
+            const response = await fetch(`${this.apiBaseUrl}/api/analyze-quest`, {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',

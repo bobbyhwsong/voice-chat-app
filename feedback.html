@@ -23,9 +23,14 @@
                 <div class="conversation-log" id="conversationLog">
                     <!-- 대화 내용이 여기에 표시됩니다 -->
                 </div>
+                <div class="feedback-actions">
+                    <button class="generate-feedback-btn" id="generateFeedbackBtn" onclick="generateFeedback()">
+                        📊 피드백 생성하기
+                    </button>
+                </div>
             </div>
             
-            <div class="feedback-section">
+            <div class="feedback-section" id="evaluationSection" style="display: none;">
                 <h2>✅ 가이드라인 준수도 평가</h2>
                 <div class="guideline-evaluation">
                     <div class="evaluation-category">
@@ -172,7 +177,7 @@
                 </div>
             </div>
             
-            <div class="feedback-section">
+            <div class="feedback-section" id="overallSection" style="display: none;">
                 <h2>📈 종합 평가</h2>
                 <div class="overall-evaluation">
                     <div class="overall-score">
@@ -205,5 +210,18 @@
     </div>
     
     <script src="feedback.js"></script>
+    <script>
+        // URL 파라미터에서 백엔드 API URL 설정
+        document.addEventListener('DOMContentLoaded', function() {
+            const urlParams = new URLSearchParams(window.location.search);
+            const backendUrl = urlParams.get('backend');
+            
+            if (backendUrl) {
+                // 백엔드 URL을 전역 변수로 설정
+                window.API_BASE_URL = backendUrl;
+                console.log('백엔드 API URL이 설정되었습니다:', backendUrl);
+            }
+        });
+    </script>
 </body>
 </html> 

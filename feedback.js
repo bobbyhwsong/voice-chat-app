@@ -2,9 +2,12 @@ class FeedbackManager {
     constructor() {
         this.initializeElements();
         this.loadConversationData();
-        this.analyzeConversation();
         this.scoreReasons = {}; // 점수 이유를 저장할 객체
         this.gradeCounts = { 상: 0, 중: 0, 하: 0 }; // 등급별 개수
+        this.conversationLogs = []; // 대화 로그 저장
+        
+        // 초기 상태에서 피드백 버튼 비활성화
+        this.disableFeedbackButton();
     }
 
     initializeElements() {
@@ -13,6 +16,7 @@ class FeedbackManager {
         this.scoreTitle = document.getElementById('scoreTitle');
         this.scoreDescription = document.getElementById('scoreDescription');
         this.improvementTips = document.getElementById('improvementTips');
+        this.generateFeedbackBtn = document.getElementById('generateFeedbackBtn');
     }
 
     async loadConversationData() {
@@ -21,15 +25,32 @@ class FeedbackManager {
             const userData = JSON.parse(localStorage.getItem('userData') || '{}');
             const participantId = userData.participantId || null;
             
+            console.log('사용자 데이터:', userData);
+            console.log('참여자 ID:', participantId);
+            
+            // API URL 동적 설정
+            const apiBaseUrl = window.API_BASE_URL || 'http://localhost:5001';
+            console.log('API Base URL:', apiBaseUrl);
+            
             // 대화 로그 가져오기
-            const response = await fetch(`http://localhost:5001/api/logs?participant_id=${participantId || ''}`);
+            const logsUrl = `${apiBaseUrl}/api/logs?participant_id=${participantId || ''}`;
+            console.log('로그 요청 URL:', logsUrl);
+            
+            const response = await fetch(logsUrl);
+            console.log('로그 응답 상태:', response.status);
+            
             const data = await response.json();
+            console.log('로그 응답 데이터:', data);
             
             if (data.status === 'success' && data.logs.length > 0) {
+                console.log(`대화 로그 ${data.logs.length}개 로드됨`);
+                this.conversationLogs = data.logs; // 대화 로그 저장
                 this.displayConversationLog(data.logs);
-                this.analyzeConversation(data.logs);
+                this.enableFeedbackButton(); // 피드백 버튼 활성화
             } else {
+                console.log('대화 로그가 없습니다.');
                 this.showNoDataMessage();
+                this.disableFeedbackButton(); // 피드백 버튼 비활성화
             }
         } catch (error) {
             console.error('대화 로그 로드 오류:', error);
@@ -91,6 +112,38 @@ class FeedbackManager {
         this.scoreDescription.textContent = '진료 연습을 먼저 진행해주세요.';
     }
 
+    enableFeedbackButton() {
+        if (this.generateFeedbackBtn) {
+            this.generateFeedbackBtn.disabled = false;
+            this.generateFeedbackBtn.textContent = '📊 피드백 생성하기';
+        }
+    }
+
+    disableFeedbackButton() {
+        if (this.generateFeedbackBtn) {
+            this.generateFeedbackBtn.disabled = true;
+            this.generateFeedbackBtn.textContent = '📊 피드백 생성하기 (대화 로그 없음)';
+        }
+    }
+
+    showEvaluationSections() {
+        // 평가 섹션들 표시
+        const evaluationSection = document.getElementById('evaluationSection');
+        const overallSection = document.getElementById('overallSection');
+        
+        if (evaluationSection) {
+            evaluationSection.style.display = 'block';
+        }
+        if (overallSection) {
+            overallSection.style.display = 'block';
+        }
+        
+        // 부드러운 스크롤로 평가 섹션으로 이동
+        if (evaluationSection) {
+            evaluationSection.scrollIntoView({ behavior: 'smooth', block: 'start' });
+        }
+    }
+
     async analyzeConversation(logs = []) {
         if (logs.length === 0) return;
 
@@ -99,29 +152,44 @@ class FeedbackManager {
             const userData = JSON.parse(localStorage.getItem('userData') || '{}');
             const participantId = userData.participantId || null;
             
+            console.log('평가 시작 - 참여자 ID:', participantId);
+            console.log('평가할 로그 개수:', logs.length);
+            
+            // API URL 동적 설정
+            const apiBaseUrl = window.API_BASE_URL || 'http://localhost:5001';
+            
+            // 평가 요청 데이터 준비
+            const requestData = {
+                logs: logs,
+                participant_id: participantId,
+                evaluation_type: 'conversation_based' // 구체적인 대화로그 기반 평가 요청
+            };
+            
+            console.log('평가 요청 데이터:', requestData);
+            
             // LLM 평가 API 호출 - 구체적인 대화로그 기반 평가 요청
-            const response = await fetch('http://localhost:5001/api/evaluate', {
+            const response = await fetch(`${apiBaseUrl}/api/evaluate`, {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
                 },
-                body: JSON.stringify({
-                    logs: logs,
-                    participant_id: participantId,
-                    evaluation_type: 'conversation_based' // 구체적인 대화로그 기반 평가 요청
-                })
+                body: JSON.stringify(requestData)
             });
 
+            console.log('평가 응답 상태:', response.status);
             const data = await response.json();
+            console.log('평가 응답 데이터:', data);
             
             if (data.status === 'success') {
                 const evaluation = data.evaluation;
+                console.log('평가 결과:', evaluation);
                 
                 // 점수 이유 저장
                 this.scoreReasons = evaluation.score_reasons || {};
                 
                 // 상/중/하 등급으로 변환된 점수 사용
                 const grades = evaluation.grades || {};
+                console.log('등급 결과:', grades);
                 
                 // 등급 표시 및 개수 계산 (종합 점수도 함께 계산됨)
                 this.displayGrades(grades);
@@ -131,6 +199,9 @@ class FeedbackManager {
                 
                 // 개선 제안 표시 (하 등급 항목에 대해서만)
                 this.displayImprovementTips(evaluation.improvement_tips, grades);
+                
+                // 평가 섹션들 표시
+                this.showEvaluationSections();
                 
                 // 피드백 데이터가 저장되었음을 표시
                 console.log('피드백 데이터가 사용자별 폴더에 저장되었습니다.');
@@ -283,6 +354,59 @@ class FeedbackManager {
         this.scoreTitle.textContent = '평가 오류';
         this.scoreDescription.textContent = '평가 중 오류가 발생했습니다. 다시 시도해주세요.';
     }
+
+    async generateFeedback() {
+        if (this.conversationLogs.length === 0) {
+            alert('대화 로그가 없습니다. 먼저 진료 연습을 진행해주세요.');
+            return;
+        }
+
+        // 버튼 비활성화 및 로딩 상태 표시
+        if (this.generateFeedbackBtn) {
+            this.generateFeedbackBtn.disabled = true;
+            this.generateFeedbackBtn.textContent = '🔄 피드백 생성 중...';
+        }
+
+        try {
+            console.log('피드백 생성 시작...');
+            console.log('대화 로그 개수:', this.conversationLogs.length);
+            
+            // 평가 실행
+            await this.analyzeConversation(this.conversationLogs);
+            
+            // 버튼 상태 복원
+            if (this.generateFeedbackBtn) {
+                this.generateFeedbackBtn.disabled = false;
+                this.generateFeedbackBtn.textContent = '✅ 피드백 생성 완료';
+                
+                // 3초 후 원래 텍스트로 복원
+                setTimeout(() => {
+                    if (this.generateFeedbackBtn) {
+                        this.generateFeedbackBtn.textContent = '📊 피드백 생성하기';
+                    }
+                }, 3000);
+            }
+            
+            console.log('피드백 생성 완료');
+        } catch (error) {
+            console.error('피드백 생성 오류:', error);
+            
+            // 오류 시 버튼 상태 복원
+            if (this.generateFeedbackBtn) {
+                this.generateFeedbackBtn.disabled = false;
+                this.generateFeedbackBtn.textContent = '❌ 피드백 생성 실패';
+                
+                // 3초 후 원래 텍스트로 복원
+                setTimeout(() => {
+                    if (this.generateFeedbackBtn) {
+                        this.generateFeedbackBtn.textContent = '📊 피드백 생성하기';
+                    }
+                }, 3000);
+            }
+            
+            alert('피드백 생성 중 오류가 발생했습니다. 다시 시도해주세요.');
+        }
+    }
 }
 
 // 토글 기능 함수 (전역 함수)
@@ -294,6 +418,13 @@ function toggleScoreReason(itemKey) {
         } else {
             reasonElement.style.display = 'none';
         }
+    }
+}
+
+// 피드백 생성 함수 (전역 함수)
+async function generateFeedback() {
+    if (window.feedbackManager) {
+        await window.feedbackManager.generateFeedback();
     }
 }
 

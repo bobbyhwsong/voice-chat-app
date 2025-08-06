@@ -1,0 +1,213 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>디버깅 페이지</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 20px;
+            background-color: #f5f5f5;
+        }
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            background: white;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        .section {
+            margin-bottom: 30px;
+            padding: 20px;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+        }
+        .section h2 {
+            margin-top: 0;
+            color: #333;
+        }
+        .input-group {
+            margin-bottom: 15px;
+        }
+        label {
+            display: block;
+            margin-bottom: 5px;
+            font-weight: bold;
+        }
+        input[type="text"] {
+            width: 100%;
+            padding: 8px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            box-sizing: border-box;
+        }
+        button {
+            background-color: #007bff;
+            color: white;
+            padding: 10px 20px;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            margin-right: 10px;
+        }
+        button:hover {
+            background-color: #0056b3;
+        }
+        .result {
+            margin-top: 15px;
+            padding: 15px;
+            background-color: #f8f9fa;
+            border-radius: 4px;
+            border-left: 4px solid #007bff;
+        }
+        .error {
+            border-left-color: #dc3545;
+            background-color: #f8d7da;
+        }
+        pre {
+            white-space: pre-wrap;
+            word-wrap: break-word;
+            background-color: #f8f9fa;
+            padding: 10px;
+            border-radius: 4px;
+            border: 1px solid #dee2e6;
+            max-height: 400px;
+            overflow-y: auto;
+        }
+        .file-list {
+            list-style: none;
+            padding: 0;
+        }
+        .file-item {
+            padding: 10px;
+            border: 1px solid #ddd;
+            margin-bottom: 5px;
+            border-radius: 4px;
+            cursor: pointer;
+        }
+        .file-item:hover {
+            background-color: #f8f9fa;
+        }
+        .file-info {
+            font-size: 12px;
+            color: #666;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🔧 백엔드 디버깅 도구</h1>
+        
+        <div class="section">
+            <h2>📁 로그 파일 목록</h2>
+            <div class="input-group">
+                <label for="participantId">참여자 ID:</label>
+                <input type="text" id="participantId" placeholder="참여자 ID를 입력하세요">
+            </div>
+            <button onclick="getLogFiles()">로그 파일 목록 조회</button>
+            <div id="logFilesResult" class="result" style="display: none;"></div>
+        </div>
+        
+        <div class="section">
+            <h2>📄 로그 파일 내용</h2>
+            <div class="input-group">
+                <label for="contentParticipantId">참여자 ID:</label>
+                <input type="text" id="contentParticipantId" placeholder="참여자 ID를 입력하세요">
+            </div>
+            <div class="input-group">
+                <label for="filename">파일명:</label>
+                <input type="text" id="filename" placeholder="파일명을 입력하세요">
+            </div>
+            <button onclick="getLogContent()">파일 내용 조회</button>
+            <div id="logContentResult" class="result" style="display: none;"></div>
+        </div>
+        
+        <div class="section">
+            <h2>🔍 전체 사용자 목록</h2>
+            <button onclick="getAllUsers()">전체 사용자 조회</button>
+            <div id="allUsersResult" class="result" style="display: none;"></div>
+        </div>
+        
+        <div class="section">
+            <h2>📊 서버 상태</h2>
+            <button onclick="checkServerHealth()">서버 상태 확인</button>
+            <div id="serverHealthResult" class="result" style="display: none;"></div>
+        </div>
+    </div>
+
+    <script>
+        // API URL 설정
+        const API_BASE_URL = window.location.search.includes('backend=') 
+            ? new URLSearchParams(window.location.search).get('backend')
+            : 'http://localhost:5001';
+
+        async function makeRequest(url, options = {}) {
+            try {
+                const response = await fetch(url, options);
+                const data = await response.json();
+                return { success: true, data, status: response.status };
+            } catch (error) {
+                return { success: false, error: error.message };
+            }
+        }
+
+        function showResult(elementId, result, isError = false) {
+            const element = document.getElementById(elementId);
+            element.style.display = 'block';
+            element.className = isError ? 'result error' : 'result';
+            
+            if (result.success) {
+                element.innerHTML = `<h4>✅ 성공</h4><pre>${JSON.stringify(result.data, null, 2)}</pre>`;
+            } else {
+                element.innerHTML = `<h4>❌ 오류</h4><pre>${result.error}</pre>`;
+            }
+        }
+
+        async function getLogFiles() {
+            const participantId = document.getElementById('participantId').value;
+            if (!participantId) {
+                alert('참여자 ID를 입력해주세요.');
+                return;
+            }
+
+            const url = `${API_BASE_URL}/api/debug/logs?participant_id=${participantId}`;
+            const result = await makeRequest(url);
+            showResult('logFilesResult', result, !result.success);
+        }
+
+        async function getLogContent() {
+            const participantId = document.getElementById('contentParticipantId').value;
+            const filename = document.getElementById('filename').value;
+            
+            if (!participantId || !filename) {
+                alert('참여자 ID와 파일명을 모두 입력해주세요.');
+                return;
+            }
+
+            const url = `${API_BASE_URL}/api/debug/log-content?participant_id=${participantId}&filename=${filename}`;
+            const result = await makeRequest(url);
+            showResult('logContentResult', result, !result.success);
+        }
+
+        async function getAllUsers() {
+            const url = `${API_BASE_URL}/api/debug/logs`;
+            const result = await makeRequest(url);
+            showResult('allUsersResult', result, !result.success);
+        }
+
+        async function checkServerHealth() {
+            const url = `${API_BASE_URL}/api/health`;
+            const result = await makeRequest(url);
+            showResult('serverHealthResult', result, !result.success);
+        }
+
+        // 페이지 로드 시 서버 상태 확인
+        window.addEventListener('load', () => {
+            console.log('API Base URL:', API_BASE_URL);
+            checkServerHealth();
+        });
+    </script>
+</body>
+</html> 

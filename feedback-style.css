@@ -95,6 +95,38 @@ header p {
     max-height: 300px;
     overflow-y: auto;
     border: 1px solid #e9ecef;
+    margin-bottom: 20px;
+}
+
+/* 피드백 생성 버튼 스타일 */
+.feedback-actions {
+    text-align: center;
+    margin-top: 20px;
+}
+
+.generate-feedback-btn {
+    background: linear-gradient(135deg, #4CAF50 0%, #45a049 100%);
+    color: white;
+    border: none;
+    padding: 15px 30px;
+    border-radius: 25px;
+    font-size: 1.1rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    box-shadow: 0 4px 15px rgba(76, 175, 80, 0.3);
+}
+
+.generate-feedback-btn:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 6px 20px rgba(76, 175, 80, 0.4);
+}
+
+.generate-feedback-btn:disabled {
+    background: #ccc;
+    cursor: not-allowed;
+    transform: none;
+    box-shadow: none;
 }
 
 .conversation-entry {

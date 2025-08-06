@@ -6,9 +6,38 @@ class VoiceChatInterface {
         this.synthesis = window.speechSynthesis;
         this.currentAudio = null; // 현재 재생 중인 오디오 추적
         
+        // API URL 동적 설정
+        this.apiBaseUrl = this.getApiBaseUrl();
+        
+        // 전역 변수로 설정 (콘솔에서 수정 가능)
+        window.voiceChat = this;
+        
         this.initializeElements();
         this.initializeSpeechRecognition();
         this.bindEvents();
+    }
+
+    // API 기본 URL 동적 설정
+    getApiBaseUrl() {
+        // 1. URL 파라미터에서 백엔드 URL 확인
+        const urlParams = new URLSearchParams(window.location.search);
+        const backendUrl = urlParams.get('backend');
+        if (backendUrl) {
+            return backendUrl;
+        }
+        
+        // 2. 전역 변수에서 확인
+        if (window.API_BASE_URL) {
+            return window.API_BASE_URL;
+        }
+        
+        // 3. 환경변수에서 확인 (Netlify용)
+        if (window.REACT_APP_API_BASE_URL) {
+            return window.REACT_APP_API_BASE_URL;
+        }
+        
+        // 4. 기본값 (로컬 개발용)
+        return 'http://localhost:5001';
     }
 
     checkUserData() {
@@ -192,7 +221,7 @@ class VoiceChatInterface {
             const participantId = userData.participantId || null;
             
             // LLM API 호출
-            const response = await fetch('http://localhost:5001/api/chat', {
+            const response = await fetch(`${this.apiBaseUrl}/api/chat`, {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
@@ -241,7 +270,7 @@ class VoiceChatInterface {
             const userData = JSON.parse(localStorage.getItem('userData') || '{}');
             const participantId = userData.participantId || localStorage.getItem('participantId');
             
-            const response = await fetch('http://localhost:5001/api/tts', {
+            const response = await fetch(`${this.apiBaseUrl}/api/tts`, {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
@@ -256,7 +285,7 @@ class VoiceChatInterface {
             
             if (data.status === 'success') {
                 // 오디오 파일 재생
-                const audio = new Audio(`http://localhost:5001${data.audio_url}`);
+                const audio = new Audio(`${this.apiBaseUrl}${data.audio_url}`);
                 audio.volume = 1.0;
                 
                 // 현재 오디오 추적
@@ -303,7 +332,7 @@ class VoiceChatInterface {
             const userData = JSON.parse(localStorage.getItem('userData') || '{}');
             const participantId = userData.participantId || localStorage.getItem('participantId');
             
-            const response = await fetch('http://localhost:5001/api/tts', {
+            const response = await fetch(`${this.apiBaseUrl}/api/tts`, {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
@@ -318,7 +347,7 @@ class VoiceChatInterface {
             
             if (data.status === 'success') {
                 // 오디오 파일 준비
-                const audio = new Audio(`http://localhost:5001${data.audio_url}`);
+                const audio = new Audio(`${this.apiBaseUrl}${data.audio_url}`);
                 audio.volume = 1.0;
                 
                 // 현재 오디오 추적
@@ -434,7 +463,7 @@ class VoiceChatInterface {
         
         try {
             // 서버에 대화 초기화 요청
-            await fetch('http://localhost:5001/api/clear', {
+            await fetch(`${this.apiBaseUrl}/api/clear`, {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
@@ -462,7 +491,7 @@ class VoiceChatInterface {
             const userData = JSON.parse(localStorage.getItem('userData') || '{}');
             const participantId = userData.participantId || null;
             
-            const response = await fetch(`http://localhost:5001/api/logs?participant_id=${participantId || ''}`);
+            const response = await fetch(`${this.apiBaseUrl}/api/logs?participant_id=${participantId || ''}`);
             const data = await response.json();
             
             if (data.status === 'success') {
@@ -526,6 +555,35 @@ class VoiceChatInterface {
         this.scrollToBottom();
     }
 }
+
+// API 기본 URL 설정 함수
+function getApiBaseUrl() {
+    // 1. URL 파라미터에서 백엔드 URL 확인
+    const urlParams = new URLSearchParams(window.location.search);
+    const backendUrl = urlParams.get('backend');
+    if (backendUrl) {
+        return backendUrl;
+    }
+    
+    // 2. 전역 변수에서 확인
+    if (window.API_BASE_URL) {
+        return window.API_BASE_URL;
+    }
+    
+    // 3. 환경변수에서 확인 (Netlify용)
+    if (window.REACT_APP_API_BASE_URL) {
+        return window.REACT_APP_API_BASE_URL;
+    }
+    
+    // 4. 기본값 (로컬 개발용)
+    return 'http://localhost:5001';
+}
+
+// API 기본 URL 설정
+window.API_BASE_URL = getApiBaseUrl();
+
+// 디버깅용 로그
+console.log('API Base URL:', window.API_BASE_URL);
 
 // 페이지 로드 시 초기화
 document.addEventListener('DOMContentLoaded', () => {

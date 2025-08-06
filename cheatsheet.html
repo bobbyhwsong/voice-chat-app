@@ -81,5 +81,18 @@
     </div>
     
     <script src="cheatsheet.js"></script>
+    <script>
+        // URL 파라미터에서 백엔드 API URL 설정
+        document.addEventListener('DOMContentLoaded', function() {
+            const urlParams = new URLSearchParams(window.location.search);
+            const backendUrl = urlParams.get('backend');
+            
+            if (backendUrl) {
+                // 백엔드 URL을 전역 변수로 설정
+                window.API_BASE_URL = backendUrl;
+                console.log('백엔드 API URL이 설정되었습니다:', backendUrl);
+            }
+        });
+    </script>
 </body>
 </html> 
