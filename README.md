@@ -1,297 +1,224 @@
-# 🏥 의료 진료 연습 시스템
+# Voice Chat App
 
-AI 의사와의 음성 기반 진료 대화 연습을 위한 연구 시스템입니다.
+의료 진료 연습을 위한 AI 챗봇 애플리케이션입니다. OpenAI GPT와 ElevenLabs TTS를 사용하여 자연스러운 대화와 음성 합성을 제공합니다.
 
-## ✨ 주요 기능
+## 🔒 보안 주의사항
 
-### 🎯 음성 기반 진료 시스템
-- **음성 인식 (Speech-to-Text)**: 마이크로 증상 설명
-- **음성 합성 (Text-to-Speech)**: AI 의사 응답을 음성으로 들려줌
-- **50대 남성 AI 의사**: 경험 많은 내과 의사 역할
-- **실시간 대화**: 자연스러운 진료 대화 연습
+⚠️ **중요**: 이 프로젝트를 GitHub에 업로드하기 전에 다음 사항을 확인하세요:
 
-### 📊 연구 데이터 관리
-- **사용자별 폴더 구조**: 참여자 ID별로 독립적인 폴더 생성
-- **증상 정보 수집**: 첫 페이지에서 현재 증상 상세 설명 입력
-- **자동 로그 기록**: 모든 대화가 사용자별 폴더에 JSON 파일로 저장
-- **음성 파일 관리**: 사용자별 폴더에 음성 파일 저장
+1. **API 키가 코드에 직접 포함되지 않았는지 확인**
+2. **.env 파일이 .gitignore에 포함되어 있는지 확인**
+3. **실제 API 키는 .env 파일에만 저장하고, 이 파일은 절대 GitHub에 업로드하지 마세요**
 
-### 🎨 직관적인 사용자 인터페이스
-- **4단계 흐름**: 연구 설명 → 증상 입력 → 가이드라인 → 진료 연습
-- **반응형 디자인**: 모바일/데스크톱 모두 지원
-- **확인 창**: 중요한 작업 시 사용자 확인
-- **치트시트 팝업**: 완료 시 격려 메시지 표시
+## 🚀 빠른 시작
 
-## 🚀 사용법
-
-### 1. OpenAI API 키 설정
-
-LLM 기능을 사용하려면 OpenAI API 키가 필요합니다:
+### 1. conda 환경 설정
 
 ```bash
-# 환경변수로 설정
-export OPENAI_API_KEY='your-api-key-here'
+# conda 환경 생성
+conda create -n voice-chat-app python=3.11 -y
 
-# 또는 app.py 파일에서 직접 설정
+# 환경 활성화
+conda activate voice-chat-app
+
+# 필요한 패키지 설치
+pip install -r requirements.txt
 ```
 
-### 2. 서버에서 서비스 시작
+### 2. API 키 설정
 
-#### 방법 1: 스크립트 사용 (권장)
+#### 방법 1: .env 파일 사용 (권장)
+
 ```bash
-# 프로젝트 디렉토리로 이동
-cd /home/hyungwoo/nk
+# env.example을 .env로 복사
+cp env.example .env
 
-# LLM 서버 시작
-./start_llm_server.sh
-
-# 웹 서버 시작 (새 터미널에서)
-./start_server.sh
+# .env 파일을 편집하여 실제 API 키 입력
+# OPENAI_API_KEY=your_actual_openai_api_key
+# ELEVENLABS_API_KEY=your_actual_elevenlabs_api_key
 ```
 
-#### 방법 2: 직접 실행
+#### 방법 2: 환경변수 직접 설정
+
 ```bash
-# 프로젝트 디렉토리로 이동
-cd /home/hyungwoo/nk
+# OpenAI API 키 설정
+export OPENAI_API_KEY="your_openai_api_key_here"
 
-# LLM 서버 시작 (5000번 포트)
-python app.py &
-
-# 웹 서버 시작 (5090번 포트)
-/usr/bin/python3 -m http.server 5090 --bind 0.0.0.0
+# ElevenLabs API 키 설정
+export ELEVENLABS_API_KEY="your_elevenlabs_api_key_here"
 ```
 
-### 3. 로컬에서 SSH 포트 포워딩
+### 3. 프로젝트 실행
 
-로컬 컴퓨터에서 SSH 연결:
+#### 방법 1: 자동 실행 스크립트 사용 (권장)
 ```bash
-ssh -L 5090:localhost:5090 -p 2211 hyungwoo@147.47.123.184
+./setup_and_run.sh
 ```
 
-### 4. 브라우저에서 접속 및 사용
-
-SSH 연결 후 브라우저에서:
-```
-http://localhost:5090
-```
-
-### 5. 시스템 사용 흐름
-
-#### 1단계: 연구 설명 및 로그인 (`index.html`)
-- 연구 목적 및 참여 안내
-- 참여자 정보 입력 (ID, 현재 증상 설명)
-- 연구 참여 동의
-- **새로운 기능**: 현재 아픈 증상 상세 설명 입력
-
-#### 2단계: 진료 가이드라인 (`guideline.html`)
-- **환자 입장에서 꼭 말해야 하는 것** 가이드라인
-- **진료과정 중에 꼭 들어야 하는 것** 체크리스트
-- 효과적인 진료 대화 팁
-- 주의사항 안내
-
-#### 3단계: 진료 연습 (`chat.html`)
-- 음성 또는 텍스트로 증상 설명
-- AI 의사와의 진료 대화
-- 진료 세션 초기화 (확인 창 포함)
-
-#### 4단계: 피드백 및 치트시트 (`feedback.html`, `cheatsheet.html`)
-- 진료 대화 평가 및 피드백
-- 맞춤형 치트시트 생성
-- **새로운 기능**: 치트시트 완료 시 "수고했습니다!" 팝업
-
-### 6. 진료 연습 사용법
-
-#### 음성 입력 사용
-1. 🎤 **증상 음성 입력** 버튼 클릭
-2. 마이크 권한 허용
-3. 증상을 말하기 시작
-4. 인식 완료 후 자동으로 텍스트 입력
-
-#### 텍스트 입력 사용
-1. 입력창에 증상이나 질문 입력
-2. **전송** 버튼 클릭 또는 Enter 키
-
-#### 추가 기능
-- **진료 세션 초기화**: 확인 창과 함께 대화 초기화
-- **대화 로그 보기**: 참여자별 대화 기록 확인
-- **치트시트 생성**: 대화 내용 기반 맞춤형 가이드 생성
-
-## 🔴 서버 관리
-
-### 서버 시작
+#### 방법 2: 수동 실행
 ```bash
-# LLM 서버 시작
-./start_llm_server.sh
+# conda 환경 활성화
+conda activate voice-chat-app
 
-# 웹 서버 시작 (새 터미널에서)
-./start_server.sh
+# 서버 실행
+python app.py
 ```
 
-### 서버 종료
-```bash
-# LLM 서버 종료
-pkill -f "python.*app.py"
+### 4. 브라우저에서 접속
 
-# 웹 서버 종료
-pkill -f "http.server"
-
-# 모든 서버 종료
-pkill -f "python.*app.py" && pkill -f "http.server"
+서버가 실행되면 브라우저에서 다음 주소로 접속하세요:
+```
+http://localhost:5000
 ```
 
-### 서버 상태 확인
-```bash
-# LLM 서버 확인 (5000번 포트)
-netstat -tlnp | grep :5000
+## 📋 기능
 
-# 웹 서버 확인 (5090번 포트)
-netstat -tlnp | grep :5090
-
-# 프로세스 확인
-ps aux | grep "python.*app.py"
-ps aux | grep "http.server"
-```
-
-### 서버 재시작
-```bash
-# 모든 서버 종료 후 재시작
-pkill -f "python.*app.py" && pkill -f "http.server"
-./start_llm_server.sh
-./start_server.sh
-```
+- **AI 챗봇**: 50대 후반의 경험 많은 내과 의사 역할
+- **음성 합성**: ElevenLabs TTS를 사용한 자연스러운 음성
+- **대화 기록**: 사용자별 대화 로그 저장
+- **평가 시스템**: LLM 기반 대화 평가 및 피드백
+- **치트시트 생성**: 맞춤형 진료 스크립트 생성
 
 ## 🛠️ 기술 스택
 
-### 프론트엔드
-- **HTML5**: 웹 표준 마크업
-- **CSS3**: 모던한 UI/UX 디자인
-- **JavaScript ES6+**: 클래스 기반 구조
-- **Web Speech API**: 
-  - `SpeechRecognition`: 음성 인식
-  - `SpeechSynthesis`: 음성 합성 (fallback)
-- **ElevenLabs API**: 고품질 음성 합성
+- **Backend**: Flask (Python)
+- **AI**: OpenAI GPT-3.5-turbo
+- **TTS**: ElevenLabs
+- **Frontend**: HTML, CSS, JavaScript
+- **환경**: conda
 
-### 백엔드
-- **Flask**: Python 웹 프레임워크
-- **OpenAI API**: GPT-3.5-turbo 모델 (50대 남성 의사 역할)
-- **CORS**: 크로스 오리진 리소스 공유
-- **JSON 로깅**: 사용자별 대화 기록 저장
-
-## 📋 브라우저 호환성
-
-### 지원 브라우저
-- ✅ Chrome 25+
-- ✅ Edge 79+
-- ✅ Safari 14.1+
-- ✅ Firefox (제한적 지원)
-
-### 주의사항
-- HTTPS 환경에서만 음성 인식 기능 사용 가능
-- 일부 브라우저에서는 추가 설정이 필요할 수 있음
-
-## 🎨 UI/UX 특징
-
-- **반응형 디자인**: 모바일/데스크톱 모두 지원
-- **모던한 디자인**: 그라데이션과 그림자 효과
-- **애니메이션**: 부드러운 전환 효과
-- **접근성**: 키보드 네비게이션 지원
-- **팝업 시스템**: 완료 시 격려 메시지 표시
-
-## 🔧 시스템 특징
-
-### AI 의사 설정
-- **50대 남성 의사**: 경험 많은 내과 의사 역할
-- **직설적 성격**: 친근하면서도 전문적인 태도
-- **핵심 진료**: 불필요한 설명보다는 핵심 전달
-- **의료 전문성**: 증상 문진, 진찰, 진단, 처방 등 의료 과정 지원
-
-### 음성 시스템
-- **ElevenLabs TTS**: 고품질 50대 남성 음성
-- **Fallback TTS**: 브라우저 기본 음성 합성
-- **음성 인식**: 한국어 음성 인식 지원
-
-### 데이터 관리
-- **사용자별 폴더 구조**: `logs/사용자ID/` 형태로 독립적인 저장 공간
-- **증상 정보 저장**: 사용자별 `user_info.json`에 증상 데이터 저장
-- **대화 로그**: 사용자별 폴더에 `medical_conversation_YYYYMMDD.json` 저장
-- **음성 파일**: 사용자별 폴더에 `audio_YYYYMMDD_HHMMSS.mp3` 저장
-- **피드백 로그**: 사용자별 폴더에 `feedback_YYYYMMDD_HHMMSS.json` 저장
-- **자동 저장**: 모든 데이터가 사용자별로 자동 분류 저장
-
-## 📁 파일 구조
+## 📁 프로젝트 구조
 
 ```
-medical-practice-system/
-├── index.html              # 연구 설명 및 로그인 페이지 (증상 입력 포함)
-├── guideline.html          # 진료 가이드라인 페이지
-├── guideline-style.css     # 가이드라인 페이지 스타일
-├── guideline.js            # 가이드라인 페이지 로직
-├── chat.html               # 진료 연습 페이지
-├── style.css               # 진료 연습 페이지 스타일
-├── script.js               # 진료 연습 페이지 로직
-├── retry.html              # 재연습 페이지
-├── retry-style.css         # 재연습 페이지 스타일
-├── retry.js                # 재연습 페이지 로직
-├── feedback.html           # 피드백 페이지
-├── feedback-style.css      # 피드백 페이지 스타일
-├── feedback.js             # 피드백 페이지 로직
-├── cheatsheet.html         # 치트시트 페이지
-├── cheatsheet-style.css    # 치트시트 페이지 스타일
-├── cheatsheet.js           # 치트시트 페이지 로직
-├── app.py                  # LLM 백엔드 서버
-├── requirements.txt         # Python 패키지 의존성
-├── start_server.sh         # 웹 서버 시작 스크립트
-├── start_llm_server.sh     # LLM 서버 시작 스크립트
-├── logs/                   # 대화 로그 저장 디렉토리
-│   ├── P001/              # 사용자별 폴더
-│   │   ├── user_info.json # 사용자 정보 및 증상
-│   │   ├── medical_conversation_20240801.json
-│   │   ├── audio_20240801_143022.mp3
-│   │   └── feedback_20240801_143022.json
-│   ├── P002/
-│   │   ├── user_info.json
-│   │   ├── medical_conversation_20240801.json
-│   │   ├── audio_20240801_143045.mp3
-│   │   └── feedback_20240801_143045.json
-│   └── ...
-└── README.md               # 프로젝트 설명서
+voice-chat-app/
+├── app.py                 # Flask 서버 메인 파일
+├── requirements.txt       # Python 패키지 의존성
+├── setup_and_run.sh      # 자동 실행 스크립트
+├── env.example           # 환경변수 예시 파일
+├── .gitignore           # Git 무시 파일 목록
+├── index.html            # 메인 웹 페이지
+├── chat.html             # 챗봇 인터페이스
+├── feedback.html         # 피드백 페이지
+├── cheatsheet.html       # 치트시트 페이지
+└── README.md            # 프로젝트 문서
 ```
 
-## 🐛 문제 해결
+## 🔧 환경 설정
 
-### 음성 인식이 작동하지 않는 경우
-1. 브라우저가 Web Speech API를 지원하는지 확인
-2. HTTPS 환경에서 실행 중인지 확인
-3. 마이크 권한이 허용되었는지 확인
-4. 브라우저 콘솔에서 오류 메시지 확인
+### conda 환경 관리
 
-### 음성 합성이 작동하지 않는 경우
-1. 브라우저가 Speech Synthesis를 지원하는지 확인
-2. 음성 설정에서 다른 음성 선택
-3. 볼륨이 켜져 있는지 확인
+```bash
+# 환경 목록 확인
+conda info --envs
 
-### 서버 연결 오류
-1. 서버가 실행 중인지 확인 (`netstat -tlnp | grep :5000`)
-2. 방화벽 설정 확인
-3. 포트 포워딩이 올바르게 설정되었는지 확인
+# 환경 활성화
+conda activate voice-chat-app
 
-## 🔮 향후 개선 계획
+# 환경 비활성화
+conda deactivate
 
-- [x] 사용자별 로그 분리
-- [x] 진료 세션 초기화 확인 창
-- [x] 4단계 사용자 흐름 구현
-- [x] 증상 정보 수집 기능
-- [x] 사용자별 폴더 구조
-- [x] 치트시트 완료 팝업
-- [ ] 더 다양한 의사 성격 옵션
-- [ ] 진료 시나리오별 연습 모드
-- [ ] 진료 결과 분석 및 피드백
-- [ ] 모바일 앱 버전 개발
+# 환경 삭제 (필요시)
+conda env remove -n voice-chat-app
+```
+
+### API 키 설정
+
+#### .env 파일 사용 (권장)
+
+1. `env.example` 파일을 `.env`로 복사:
+```bash
+cp env.example .env
+```
+
+2. `.env` 파일을 편집하여 실제 API 키 입력:
+```bash
+# .env 파일 내용
+OPENAI_API_KEY=your_actual_openai_api_key_here
+ELEVENLABS_API_KEY=your_actual_elevenlabs_api_key_here
+```
+
+#### 환경변수 직접 설정
+
+```bash
+# 현재 세션에만 적용
+export OPENAI_API_KEY="your_key"
+export ELEVENLABS_API_KEY="your_key"
+
+# 영구 설정 (.zshrc에 추가)
+echo 'export OPENAI_API_KEY="your_key"' >> ~/.zshrc
+echo 'export ELEVENLABS_API_KEY="your_key"' >> ~/.zshrc
+source ~/.zshrc
+```
+
+## 🧪 테스트
+
+환경이 올바르게 설정되었는지 확인하려면:
+
+```bash
+# API 키 확인
+echo $OPENAI_API_KEY
+echo $ELEVENLABS_API_KEY
+
+# 서버 실행 테스트
+python app.py
+```
+
+## 📝 API 엔드포인트
+
+- `POST /api/chat`: 챗봇 대화
+- `POST /api/clear`: 대화 기록 초기화
+- `GET /api/health`: 서버 상태 확인
+- `POST /api/evaluate`: 대화 평가
+- `POST /api/generate-cheatsheet`: 치트시트 생성
+- `POST /api/tts`: 음성 합성
+
+## 🚨 문제 해결
+
+### 1. conda 환경 문제
+```bash
+# 환경 재생성
+conda env remove -n voice-chat-app
+conda create -n voice-chat-app python=3.11 -y
+conda activate voice-chat-app
+pip install -r requirements.txt
+```
+
+### 2. API 키 문제
+```bash
+# API 키 확인
+echo $OPENAI_API_KEY
+echo $ELEVENLABS_API_KEY
+
+# .env 파일 확인
+cat .env
+
+# API 키 재설정
+export OPENAI_API_KEY="your_key"
+export ELEVENLABS_API_KEY="your_key"
+```
+
+### 3. 포트 충돌
+기본 포트 5000이 사용 중인 경우 `app.py`에서 포트를 변경하세요.
+
+### 4. 보안 관련 문제
+- `.env` 파일이 `.gitignore`에 포함되어 있는지 확인
+- API 키가 코드에 직접 포함되지 않았는지 확인
+- GitHub에 업로드하기 전에 민감한 정보가 제거되었는지 확인
+
+## 🔒 보안 체크리스트
+
+GitHub에 업로드하기 전에 다음을 확인하세요:
+
+- [ ] `.env` 파일이 `.gitignore`에 포함되어 있음
+- [ ] 코드에 실제 API 키가 직접 포함되지 않음
+- [ ] `env.example` 파일만 포함되어 있음
+- [ ] 로그 파일이나 임시 파일이 제거됨
+- [ ] 민감한 정보가 포함된 파일이 모두 제거됨
 
 ## 📄 라이선스
 
-이 프로젝트는 MIT 라이선스 하에 배포됩니다.
+이 프로젝트는 교육 목적으로 제작되었습니다.
 
----
+## 🤝 기여
 
-**의료 진료 연습 시스템을 통해 효과적인 의사소통을 연습해보세요! 🏥✨** 
+버그 리포트나 기능 제안은 이슈를 통해 제출해주세요. 

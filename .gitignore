@@ -1,3 +1,8 @@
+# 환경변수 파일 (API 키 포함)
+.env
+.env.local
+.env.production
+
 # Python
 __pycache__/
 *.py[cod]
@@ -76,7 +81,6 @@ celerybeat-schedule
 *.sage.py
 
 # Environments
-.env
 .venv
 env/
 venv/
@@ -99,29 +103,31 @@ venv.bak/
 .dmypy.json
 dmypy.json
 
-# IDE
-.vscode/
-.idea/
-*.swp
-*.swo
-
-# OS
-.DS_Store
-Thumbs.db
-
-# Logs
+# 로그 파일
 logs/
 *.log
 
-# Audio files
+# 오디오 파일
 *.mp3
 *.wav
 *.ogg
 
-# API Keys (보안을 위해)
-.env
-config.py
-
-# Temporary files
+# 임시 파일
 *.tmp
-*.temp 
+*.temp
+
+# IDE 설정
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# OS 생성 파일
+.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
+Thumbs.db 
