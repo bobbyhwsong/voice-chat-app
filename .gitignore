@@ -133,3 +133,6 @@ ehthumbs.db
 Thumbs.db 
 # Local Netlify folder
 .netlify
+
+# 환경 설정 파일
+env.js

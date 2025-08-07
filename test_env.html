@@ -78,7 +78,6 @@
         </div>
     </div>
 
-    <script src="env.js"></script>
     <script>
         // ngrok URL을 동적으로 가져오는 함수
         async function getNgrokUrl() {
@@ -92,15 +91,16 @@
                 // 환경변수가 없으면 API를 통해 가져오기 시도
                 console.log('🔄 API를 통해 ngrok URL 가져오기 시도...');
                 
-                // 현재 알려진 URL들로 시도
+                // 현재 알려진 URL들로 시도 (최신 순서)
                 const knownUrls = [
                     'https://42eb736e453b.ngrok-free.app',
-                    'https://f04c2716f322.ngrok-free.app'
+                    'https://f04c2716f322.ngrok-free.app',
+                    'https://your-ngrok-url.ngrok-free.app' // 새로운 URL이 있으면 여기에 추가
                 ];
                 
                 for (const url of knownUrls) {
                     try {
-                        const response = await fetch(`${url}/api/ngrok-url`, {
+                        const response = await fetch(`${url}/api/health`, {
                             method: 'GET',
                             headers: {
                                 'Content-Type': 'application/json',
@@ -108,11 +108,8 @@
                         });
                         
                         if (response.ok) {
-                            const data = await response.json();
-                            if (data.status === 'success' && data.ngrok_url) {
-                                console.log('✅ API를 통해 ngrok URL 가져옴:', data.ngrok_url);
-                                return data.ngrok_url;
-                            }
+                            console.log('✅ API 연결 성공:', url);
+                            return url;
                         }
                     } catch (error) {
                         console.log(`⚠️ ${url} 접근 실패:`, error.message);
@@ -141,18 +138,19 @@
             if (window.API_BASE_URL) {
                 html += `<div class="success">✅ API_BASE_URL: ${window.API_BASE_URL}</div>`;
             } else {
-                html += `<div class="error">❌ API_BASE_URL이 설정되지 않았습니다.</div>`;
+                html += `<div class="info">ℹ️ API_BASE_URL이 설정되지 않았습니다. (Netlify 환경에서는 정상)</div>`;
             }
             
             // 동적으로 가져온 ngrok URL 표시
-            html += `<div class="info">🔧 동적 ngrok URL: ${dynamicNgrokUrl}</div>`;
+            html += `<div class="success">🔧 동적 ngrok URL: ${dynamicNgrokUrl}</div>`;
             
             // 현재 도메인 확인
             html += `<div class="info">🌐 현재 도메인: ${window.location.hostname}</div>`;
             html += `<div class="info">🔗 현재 URL: ${window.location.href}</div>`;
             
-            // env.js 파일 로드 확인
-            html += `<div class="info">📁 env.js 파일: ${typeof window.API_BASE_URL !== 'undefined' ? '로드됨' : '로드되지 않음'}</div>`;
+            // 환경 확인
+            const isNetlify = window.location.hostname.includes('netlify.app');
+            html += `<div class="info">🚀 배포 환경: ${isNetlify ? 'Netlify' : '로컬'}</div>`;
             
             statusDiv.innerHTML = html;
         }
@@ -168,19 +166,27 @@
                 
                 console.log('🔗 테스트할 API URL:', apiUrl);
                 
+                // CORS 오류를 방지하기 위한 설정
+                const controller = new AbortController();
+                const timeoutId = setTimeout(() => controller.abort(), 10000); // 10초 타임아웃
+                
                 // 헬스 체크 API 호출
                 const response = await fetch(`${apiUrl}/api/health`, {
                     method: 'GET',
                     headers: {
                         'Content-Type': 'application/json',
-                    }
+                    },
+                    signal: controller.signal
                 });
+                
+                clearTimeout(timeoutId);
                 
                 if (response.ok) {
                     const data = await response.json();
                     statusDiv.innerHTML = `
                         <div class="success">
                             ✅ API 연결 성공!<br>
+                            🔗 URL: ${apiUrl}<br>
                             📊 응답: ${JSON.stringify(data, null, 2)}
                         </div>
                     `;
@@ -188,16 +194,25 @@
                     statusDiv.innerHTML = `
                         <div class="error">
                             ❌ API 연결 실패<br>
+                            🔗 URL: ${apiUrl}<br>
                             📊 상태 코드: ${response.status}<br>
                             📊 응답: ${await response.text()}
                         </div>
                     `;
                 }
             } catch (error) {
+                let errorMessage = error.message;
+                if (error.name === 'AbortError') {
+                    errorMessage = '요청 시간 초과 (10초)';
+                } else if (error.message.includes('CORS')) {
+                    errorMessage = 'CORS 오류: 브라우저에서 차단됨';
+                }
+                
                 statusDiv.innerHTML = `
                     <div class="error">
                         ❌ API 연결 오류<br>
-                        📊 오류: ${error.message}
+                        📊 오류: ${errorMessage}<br>
+                        💡 해결방법: ngrok이 실행 중인지 확인하세요
                     </div>
                 `;
             }
