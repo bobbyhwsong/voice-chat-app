@@ -160,9 +160,11 @@
             const statusDiv = document.getElementById('api-status');
             statusDiv.innerHTML = '<div class="info">🔄 API 연결 테스트 중...</div>';
             
+            let apiUrl = '';
+            
             try {
                 // 동적으로 ngrok URL 가져오기
-                const apiUrl = await getNgrokUrl();
+                apiUrl = await getNgrokUrl();
                 
                 console.log('🔗 테스트할 API URL:', apiUrl);
                 
