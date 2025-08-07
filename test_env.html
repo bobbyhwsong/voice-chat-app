@@ -1,0 +1,182 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>환경변수 테스트</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
+            background-color: #f5f5f5;
+        }
+        .container {
+            background: white;
+            padding: 20px;
+            border-radius: 10px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        .test-section {
+            margin: 20px 0;
+            padding: 15px;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+        }
+        .success {
+            color: green;
+            background-color: #d4edda;
+        }
+        .error {
+            color: red;
+            background-color: #f8d7da;
+        }
+        .info {
+            color: blue;
+            background-color: #d1ecf1;
+        }
+        button {
+            background-color: #007bff;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 5px;
+            cursor: pointer;
+            margin: 5px;
+        }
+        button:hover {
+            background-color: #0056b3;
+        }
+        pre {
+            background-color: #f8f9fa;
+            padding: 10px;
+            border-radius: 5px;
+            overflow-x: auto;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🌐 Netlify 환경변수 테스트</h1>
+        
+        <div class="test-section">
+            <h2>📋 환경변수 확인</h2>
+            <div id="env-status"></div>
+        </div>
+        
+        <div class="test-section">
+            <h2>🔗 API 연결 테스트</h2>
+            <button onclick="testApiConnection()">API 연결 테스트</button>
+            <div id="api-status"></div>
+        </div>
+        
+        <div class="test-section">
+            <h2>📊 디버그 정보</h2>
+            <button onclick="showDebugInfo()">디버그 정보 표시</button>
+            <div id="debug-info"></div>
+        </div>
+    </div>
+
+    <script src="env.js"></script>
+    <script>
+        // 환경변수 확인
+        function checkEnvironmentVariables() {
+            const statusDiv = document.getElementById('env-status');
+            let html = '<h3>환경변수 상태:</h3>';
+            
+            // API_BASE_URL 확인
+            if (window.API_BASE_URL) {
+                html += `<div class="success">✅ API_BASE_URL: ${window.API_BASE_URL}</div>`;
+            } else {
+                html += `<div class="error">❌ API_BASE_URL이 설정되지 않았습니다.</div>`;
+            }
+            
+            // 현재 도메인 확인
+            html += `<div class="info">🌐 현재 도메인: ${window.location.hostname}</div>`;
+            html += `<div class="info">🔗 현재 URL: ${window.location.href}</div>`;
+            
+            statusDiv.innerHTML = html;
+        }
+        
+        // API 연결 테스트
+        async function testApiConnection() {
+            const statusDiv = document.getElementById('api-status');
+            statusDiv.innerHTML = '<div class="info">🔄 API 연결 테스트 중...</div>';
+            
+            try {
+                // API URL 결정
+                let apiUrl;
+                if (window.API_BASE_URL) {
+                    apiUrl = window.API_BASE_URL;
+                } else {
+                    apiUrl = 'http://localhost:5001';
+                }
+                
+                console.log('🔗 테스트할 API URL:', apiUrl);
+                
+                // 헬스 체크 API 호출
+                const response = await fetch(`${apiUrl}/api/health`, {
+                    method: 'GET',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    }
+                });
+                
+                if (response.ok) {
+                    const data = await response.json();
+                    statusDiv.innerHTML = `
+                        <div class="success">
+                            ✅ API 연결 성공!<br>
+                            📊 응답: ${JSON.stringify(data, null, 2)}
+                        </div>
+                    `;
+                } else {
+                    statusDiv.innerHTML = `
+                        <div class="error">
+                            ❌ API 연결 실패<br>
+                            📊 상태 코드: ${response.status}<br>
+                            📊 응답: ${await response.text()}
+                        </div>
+                    `;
+                }
+            } catch (error) {
+                statusDiv.innerHTML = `
+                    <div class="error">
+                        ❌ API 연결 오류<br>
+                        📊 오류: ${error.message}
+                    </div>
+                `;
+            }
+        }
+        
+        // 디버그 정보 표시
+        function showDebugInfo() {
+            const debugDiv = document.getElementById('debug-info');
+            const debugInfo = {
+                userAgent: navigator.userAgent,
+                location: {
+                    href: window.location.href,
+                    hostname: window.location.hostname,
+                    protocol: window.location.protocol,
+                    search: window.location.search
+                },
+                environment: {
+                    API_BASE_URL: window.API_BASE_URL || 'undefined'
+                },
+                timestamp: new Date().toISOString()
+            };
+            
+            debugDiv.innerHTML = `
+                <h3>디버그 정보:</h3>
+                <pre>${JSON.stringify(debugInfo, null, 2)}</pre>
+            `;
+        }
+        
+        // 페이지 로드 시 환경변수 확인
+        document.addEventListener('DOMContentLoaded', function() {
+            checkEnvironmentVariables();
+        });
+    </script>
+</body>
+</html>

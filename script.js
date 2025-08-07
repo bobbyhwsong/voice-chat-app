@@ -27,20 +27,24 @@ class VoiceChatInterface {
         const urlParams = new URLSearchParams(window.location.search);
         const backendUrl = urlParams.get('backend');
         if (backendUrl) {
+            console.log('🔗 URL 파라미터에서 백엔드 URL 감지:', backendUrl);
             return backendUrl;
         }
         
         // 2. 전역 변수에서 확인
         if (window.API_BASE_URL) {
+            console.log('🔗 전역 변수에서 백엔드 URL 감지:', window.API_BASE_URL);
             return window.API_BASE_URL;
         }
         
         // 3. 환경변수에서 확인 (Netlify용)
-        if (window.REACT_APP_API_BASE_URL) {
-            return window.REACT_APP_API_BASE_URL;
+        if (window.API_BASE_URL) {
+            console.log('🔗 환경변수에서 백엔드 URL 감지:', window.API_BASE_URL);
+            return window.API_BASE_URL;
         }
         
         // 4. 기본값 (로컬 개발용)
+        console.log('🔗 기본 백엔드 URL 사용:', 'http://localhost:5001');
         return 'http://localhost:5001';
     }
 
@@ -80,6 +84,18 @@ class VoiceChatInterface {
 
     // ngrok URL 자동 업데이트 초기화
     async initializeNgrokUrlUpdate() {
+        // Netlify 환경에서는 로컬 서버에 접근할 수 없으므로
+        // 환경변수나 URL 파라미터를 우선 사용
+        const isNetlify = window.location.hostname.includes('netlify.app');
+        
+        if (isNetlify) {
+            console.log('🌐 Netlify 환경 감지 - 로컬 서버 접근 비활성화');
+            return;
+        }
+        
+        // 로컬 개발 환경에서만 ngrok URL 자동 감지 활성화
+        console.log('🖥️ 로컬 환경 감지 - ngrok URL 자동 감지 활성화');
+        
         // 페이지 로드 시 즉시 시도
         await this.updateNgrokUrl();
         
@@ -759,10 +775,10 @@ function getApiBaseUrl() {
         return window.API_BASE_URL;
     }
     
-    // 3. 환경변수에서 확인 (Netlify용)
-    if (window.REACT_APP_API_BASE_URL) {
-        return window.REACT_APP_API_BASE_URL;
-    }
+            // 3. 환경변수에서 확인 (Netlify용)
+        if (window.API_BASE_URL) {
+            return window.API_BASE_URL;
+        }
     
     // 4. 기본값 (로컬 개발용)
     return 'http://localhost:5001';

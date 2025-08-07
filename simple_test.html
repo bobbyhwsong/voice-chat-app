@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>ngrok 연결 테스트</title>
+    <title>간단한 ngrok 테스트</title>
     <style>
         body {
             font-family: Arial, sans-serif;
@@ -71,12 +71,12 @@
 </head>
 <body>
     <div class="container">
-        <h1>🌐 ngrok 연결 테스트</h1>
+        <h1>🌐 간단한 ngrok 테스트</h1>
         
         <div class="test-section">
             <h2>📋 현재 ngrok URL</h2>
             <div id="current-url" class="info">
-                로딩 중...
+                https://f04c2716f322.ngrok-free.app
             </div>
         </div>
         
@@ -89,71 +89,29 @@
         </div>
         
         <div class="test-section">
-            <h2>📊 상세 정보</h2>
-            <button onclick="showDetails()">상세 정보 표시</button>
-            <div id="details"></div>
+            <h2>📊 로그</h2>
+            <div id="log"></div>
         </div>
     </div>
 
     <script>
-        // 현재 ngrok URL 가져오기
-        async function getCurrentNgrokUrl() {
-            // 먼저 ngrok 대시보드에서 URL을 가져오기 시도
-            try {
-                console.log('🔄 ngrok 대시보드에서 URL 확인 중...');
-                const response = await fetch('http://localhost:4040/api/tunnels');
-                console.log('📊 ngrok 대시보드 응답 상태:', response.status, response.statusText);
-                
-                if (response.ok) {
-                    const data = await response.json();
-                    console.log('📋 ngrok 대시보드 데이터:', data);
-                    
-                    if (data.tunnels && data.tunnels.length > 0) {
-                        const tunnel = data.tunnels[0];
-                        const ngrokUrl = tunnel.public_url;
-                        console.log('✅ ngrok URL 성공적으로 가져옴:', ngrokUrl);
-                        return ngrokUrl;
-                    }
-                }
-            } catch (error) {
-                console.log('⚠️ ngrok 대시보드 접근 실패:', error.message);
-            }
-            
-            // fallback: 하드코딩된 URL 사용
-            console.log('🔄 하드코딩된 ngrok URL 사용');
-            return 'https://f04c2716f322.ngrok-free.app';
-        }
+        const NGROK_URL = 'https://f04c2716f322.ngrok-free.app';
         
-        // 페이지 로드 시 현재 URL 표시
-        async function updateCurrentUrl() {
-            const urlDiv = document.getElementById('current-url');
-            const url = await getCurrentNgrokUrl();
-            
-            if (url) {
-                urlDiv.innerHTML = `
-                    <strong>현재 ngrok URL:</strong><br>
-                    <a href="${url}" target="_blank">${url}</a>
-                `;
-                urlDiv.className = 'success';
-            } else {
-                urlDiv.innerHTML = 'ngrok URL을 가져올 수 없습니다.';
-                urlDiv.className = 'error';
-            }
+        function log(message) {
+            const logDiv = document.getElementById('log');
+            const timestamp = new Date().toLocaleTimeString();
+            logDiv.innerHTML += `[${timestamp}] ${message}<br>`;
+            logDiv.scrollTop = logDiv.scrollHeight;
         }
         
         // 헬스 체크 테스트
         async function testHealth() {
             const resultsDiv = document.getElementById('api-results');
             resultsDiv.innerHTML = '<div class="loading">🔄 헬스 체크 중...</div>';
+            log('헬스 체크 시작');
             
             try {
-                const url = await getCurrentNgrokUrl();
-                if (!url) {
-                    resultsDiv.innerHTML = '<div class="error">❌ ngrok URL을 가져올 수 없습니다.</div>';
-                    return;
-                }
-                
-                const response = await fetch(`${url}/api/health`);
+                const response = await fetch(`${NGROK_URL}/api/health`);
                 const data = await response.json();
                 
                 resultsDiv.innerHTML = `
@@ -163,6 +121,7 @@
                         <pre>${JSON.stringify(data, null, 2)}</pre>
                     </div>
                 `;
+                log('헬스 체크 성공');
             } catch (error) {
                 resultsDiv.innerHTML = `
                     <div class="error">
@@ -170,6 +129,7 @@
                         <strong>오류:</strong> ${error.message}
                     </div>
                 `;
+                log('헬스 체크 실패: ' + error.message);
             }
         }
         
@@ -177,15 +137,10 @@
         async function testNgrokUrl() {
             const resultsDiv = document.getElementById('api-results');
             resultsDiv.innerHTML = '<div class="loading">🔄 ngrok URL 확인 중...</div>';
+            log('ngrok URL 확인 시작');
             
             try {
-                const url = await getCurrentNgrokUrl();
-                if (!url) {
-                    resultsDiv.innerHTML = '<div class="error">❌ ngrok URL을 가져올 수 없습니다.</div>';
-                    return;
-                }
-                
-                const response = await fetch(`${url}/api/ngrok-url`);
+                const response = await fetch(`${NGROK_URL}/api/ngrok-url`);
                 const data = await response.json();
                 
                 resultsDiv.innerHTML = `
@@ -195,6 +150,7 @@
                         <pre>${JSON.stringify(data, null, 2)}</pre>
                     </div>
                 `;
+                log('ngrok URL 확인 성공');
             } catch (error) {
                 resultsDiv.innerHTML = `
                     <div class="error">
@@ -202,6 +158,7 @@
                         <strong>오류:</strong> ${error.message}
                     </div>
                 `;
+                log('ngrok URL 확인 실패: ' + error.message);
             }
         }
         
@@ -209,15 +166,10 @@
         async function testChat() {
             const resultsDiv = document.getElementById('api-results');
             resultsDiv.innerHTML = '<div class="loading">🔄 채팅 API 테스트 중...</div>';
+            log('채팅 API 테스트 시작');
             
             try {
-                const url = await getCurrentNgrokUrl();
-                if (!url) {
-                    resultsDiv.innerHTML = '<div class="error">❌ ngrok URL을 가져올 수 없습니다.</div>';
-                    return;
-                }
-                
-                const response = await fetch(`${url}/api/chat`, {
+                const response = await fetch(`${NGROK_URL}/api/chat`, {
                     method: 'POST',
                     headers: {
                         'Content-Type': 'application/json',
@@ -237,6 +189,7 @@
                         <pre>${JSON.stringify(data, null, 2)}</pre>
                     </div>
                 `;
+                log('채팅 API 테스트 성공');
             } catch (error) {
                 resultsDiv.innerHTML = `
                     <div class="error">
@@ -244,47 +197,13 @@
                         <strong>오류:</strong> ${error.message}
                     </div>
                 `;
-            }
-        }
-        
-        // 상세 정보 표시
-        async function showDetails() {
-            const detailsDiv = document.getElementById('details');
-            detailsDiv.innerHTML = '<div class="loading">🔄 상세 정보 수집 중...</div>';
-            
-            try {
-                const url = await getCurrentNgrokUrl();
-                const details = {
-                    timestamp: new Date().toISOString(),
-                    userAgent: navigator.userAgent,
-                    location: {
-                        href: window.location.href,
-                        hostname: window.location.hostname,
-                        protocol: window.location.protocol
-                    },
-                    ngrokUrl: url,
-                    localServer: 'http://localhost:5001'
-                };
-                
-                detailsDiv.innerHTML = `
-                    <div class="info">
-                        <h3>상세 정보:</h3>
-                        <pre>${JSON.stringify(details, null, 2)}</pre>
-                    </div>
-                `;
-            } catch (error) {
-                detailsDiv.innerHTML = `
-                    <div class="error">
-                        ❌ 상세 정보 수집 실패<br>
-                        <strong>오류:</strong> ${error.message}
-                    </div>
-                `;
+                log('채팅 API 테스트 실패: ' + error.message);
             }
         }
         
         // 페이지 로드 시 초기화
         document.addEventListener('DOMContentLoaded', function() {
-            updateCurrentUrl();
+            log('페이지 로드됨 - ngrok URL: ' + NGROK_URL);
         });
     </script>
 </body>

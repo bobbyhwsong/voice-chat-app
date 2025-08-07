@@ -17,7 +17,7 @@ logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
 app = Flask(__name__)
-CORS(app)  # CORS 활성화
+CORS(app, origins="*", supports_credentials=True)  # 모든 도메인 허용
 
 # API 키 설정
 OPENAI_API_KEY = os.getenv('OPENAI_API_KEY')
@@ -39,6 +39,13 @@ conversation_history = []
 LOG_DIR = "logs"
 if not os.path.exists(LOG_DIR):
     os.makedirs(LOG_DIR)
+
+def add_cors_headers(response):
+    """CORS 헤더 추가"""
+    response.headers.add('Access-Control-Allow-Origin', '*')
+    response.headers.add('Access-Control-Allow-Headers', 'Content-Type')
+    response.headers.add('Access-Control-Allow-Methods', 'GET, POST, OPTIONS')
+    return response
 
 def create_user_directory(participant_id):
     """사용자별 디렉토리 생성"""
@@ -239,7 +246,7 @@ def clear_conversation():
 @app.route('/api/health', methods=['GET'])
 def health_check():
     """서버 상태 확인"""
-    return jsonify({'status': 'healthy', 'message': '서버가 정상적으로 작동 중입니다.'})
+    return add_cors_headers(jsonify({'status': 'healthy', 'message': '서버가 정상적으로 작동 중입니다.'}))
 
 @app.route('/api/ngrok-url', methods=['GET'])
 def get_ngrok_url():
@@ -251,25 +258,37 @@ def get_ngrok_url():
             tunnels = response.json()
             for tunnel in tunnels.get('tunnels', []):
                 if tunnel.get('proto') == 'https':
-                    return jsonify({
+                    response = jsonify({
                         'status': 'success',
                         'ngrok_url': tunnel.get('public_url'),
                         'message': 'ngrok URL을 성공적으로 가져왔습니다.'
                     })
+                    response.headers.add('Access-Control-Allow-Origin', '*')
+                    response.headers.add('Access-Control-Allow-Headers', 'Content-Type')
+                    response.headers.add('Access-Control-Allow-Methods', 'GET, POST, OPTIONS')
+                    return response
         
-        return jsonify({
+        response = jsonify({
             'status': 'error',
             'message': 'ngrok 터널을 찾을 수 없습니다.',
             'ngrok_url': None
         }), 404
+        response[0].headers.add('Access-Control-Allow-Origin', '*')
+        response[0].headers.add('Access-Control-Allow-Headers', 'Content-Type')
+        response[0].headers.add('Access-Control-Allow-Methods', 'GET, POST, OPTIONS')
+        return response
         
     except Exception as e:
         logger.error(f"ngrok URL 조회 오류: {str(e)}")
-        return jsonify({
+        response = jsonify({
             'status': 'error',
             'message': 'ngrok URL 조회 중 오류가 발생했습니다.',
             'ngrok_url': None
         }), 500
+        response[0].headers.add('Access-Control-Allow-Origin', '*')
+        response[0].headers.add('Access-Control-Allow-Headers', 'Content-Type')
+        response[0].headers.add('Access-Control-Allow-Methods', 'GET, POST, OPTIONS')
+        return response
 
 @app.route('/api/save-user-data', methods=['POST'])
 def save_user_data():
