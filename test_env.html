@@ -187,21 +187,39 @@
                 clearTimeout(timeoutId);
                 
                 if (response.ok) {
-                    const data = await response.json();
-                    statusDiv.innerHTML = `
-                        <div class="success">
-                            ✅ API 연결 성공!<br>
-                            🔗 URL: ${apiUrl}<br>
-                            📊 응답: ${JSON.stringify(data, null, 2)}
-                        </div>
-                    `;
+                    // 먼저 응답을 텍스트로 확인
+                    const responseText = await response.text();
+                    console.log('API 응답 텍스트:', responseText);
+                    
+                    let data;
+                    try {
+                        data = JSON.parse(responseText);
+                        statusDiv.innerHTML = `
+                            <div class="success">
+                                ✅ API 연결 성공!<br>
+                                🔗 URL: ${apiUrl}<br>
+                                📊 응답: ${JSON.stringify(data, null, 2)}
+                            </div>
+                        `;
+                    } catch (parseError) {
+                        // JSON 파싱 실패 시 텍스트로 표시
+                        statusDiv.innerHTML = `
+                            <div class="error">
+                                ⚠️ API 응답이 JSON이 아닙니다<br>
+                                🔗 URL: ${apiUrl}<br>
+                                📊 상태 코드: ${response.status}<br>
+                                📊 응답: ${responseText.substring(0, 200)}...
+                            </div>
+                        `;
+                    }
                 } else {
+                    const errorText = await response.text();
                     statusDiv.innerHTML = `
                         <div class="error">
                             ❌ API 연결 실패<br>
                             🔗 URL: ${apiUrl}<br>
                             📊 상태 코드: ${response.status}<br>
-                            📊 응답: ${await response.text()}
+                            📊 응답: ${errorText}
                         </div>
                     `;
                 }
