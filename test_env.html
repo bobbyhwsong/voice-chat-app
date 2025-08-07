@@ -80,10 +80,62 @@
 
     <script src="env.js"></script>
     <script>
+        // ngrok URL을 동적으로 가져오는 함수
+        async function getNgrokUrl() {
+            try {
+                // 먼저 환경변수에서 확인
+                if (window.API_BASE_URL) {
+                    console.log('✅ 환경변수에서 ngrok URL 감지:', window.API_BASE_URL);
+                    return window.API_BASE_URL;
+                }
+                
+                // 환경변수가 없으면 API를 통해 가져오기 시도
+                console.log('🔄 API를 통해 ngrok URL 가져오기 시도...');
+                
+                // 현재 알려진 URL들로 시도
+                const knownUrls = [
+                    'https://42eb736e453b.ngrok-free.app',
+                    'https://f04c2716f322.ngrok-free.app'
+                ];
+                
+                for (const url of knownUrls) {
+                    try {
+                        const response = await fetch(`${url}/api/ngrok-url`, {
+                            method: 'GET',
+                            headers: {
+                                'Content-Type': 'application/json',
+                            }
+                        });
+                        
+                        if (response.ok) {
+                            const data = await response.json();
+                            if (data.status === 'success' && data.ngrok_url) {
+                                console.log('✅ API를 통해 ngrok URL 가져옴:', data.ngrok_url);
+                                return data.ngrok_url;
+                            }
+                        }
+                    } catch (error) {
+                        console.log(`⚠️ ${url} 접근 실패:`, error.message);
+                    }
+                }
+                
+                // 모든 시도 실패 시 기본값 반환
+                console.log('⚠️ ngrok URL을 가져올 수 없어 기본값 사용');
+                return 'https://42eb736e453b.ngrok-free.app';
+                
+            } catch (error) {
+                console.error('❌ ngrok URL 가져오기 실패:', error);
+                return 'https://42eb736e453b.ngrok-free.app';
+            }
+        }
+        
         // 환경변수 확인
-        function checkEnvironmentVariables() {
+        async function checkEnvironmentVariables() {
             const statusDiv = document.getElementById('env-status');
             let html = '<h3>환경변수 상태:</h3>';
+            
+            // 동적으로 ngrok URL 가져오기
+            const dynamicNgrokUrl = await getNgrokUrl();
             
             // API_BASE_URL 확인
             if (window.API_BASE_URL) {
@@ -92,8 +144,8 @@
                 html += `<div class="error">❌ API_BASE_URL이 설정되지 않았습니다.</div>`;
             }
             
-            // 하드코딩된 URL 표시
-            html += `<div class="info">🔧 하드코딩된 ngrok URL: https://42eb736e453b.ngrok-free.app</div>`;
+            // 동적으로 가져온 ngrok URL 표시
+            html += `<div class="info">🔧 동적 ngrok URL: ${dynamicNgrokUrl}</div>`;
             
             // 현재 도메인 확인
             html += `<div class="info">🌐 현재 도메인: ${window.location.hostname}</div>`;
@@ -111,14 +163,8 @@
             statusDiv.innerHTML = '<div class="info">🔄 API 연결 테스트 중...</div>';
             
             try {
-                // API URL 결정
-                let apiUrl;
-                if (window.API_BASE_URL) {
-                    apiUrl = window.API_BASE_URL;
-                } else {
-                    // Netlify 환경변수가 없으면 하드코딩된 URL 사용
-                    apiUrl = 'https://42eb736e453b.ngrok-free.app';
-                }
+                // 동적으로 ngrok URL 가져오기
+                const apiUrl = await getNgrokUrl();
                 
                 console.log('🔗 테스트할 API URL:', apiUrl);
                 
@@ -181,8 +227,8 @@
         }
         
         // 페이지 로드 시 환경변수 확인
-        document.addEventListener('DOMContentLoaded', function() {
-            checkEnvironmentVariables();
+        document.addEventListener('DOMContentLoaded', async function() {
+            await checkEnvironmentVariables();
         });
     </script>
 </body>
