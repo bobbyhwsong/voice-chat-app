@@ -92,9 +92,15 @@
                 html += `<div class="error">❌ API_BASE_URL이 설정되지 않았습니다.</div>`;
             }
             
+            // 하드코딩된 URL 표시
+            html += `<div class="info">🔧 하드코딩된 ngrok URL: https://42eb736e453b.ngrok-free.app</div>`;
+            
             // 현재 도메인 확인
             html += `<div class="info">🌐 현재 도메인: ${window.location.hostname}</div>`;
             html += `<div class="info">🔗 현재 URL: ${window.location.href}</div>`;
+            
+            // env.js 파일 로드 확인
+            html += `<div class="info">📁 env.js 파일: ${typeof window.API_BASE_URL !== 'undefined' ? '로드됨' : '로드되지 않음'}</div>`;
             
             statusDiv.innerHTML = html;
         }
@@ -110,7 +116,8 @@
                 if (window.API_BASE_URL) {
                     apiUrl = window.API_BASE_URL;
                 } else {
-                    apiUrl = 'http://localhost:5001';
+                    // Netlify 환경변수가 없으면 하드코딩된 URL 사용
+                    apiUrl = 'https://42eb736e453b.ngrok-free.app';
                 }
                 
                 console.log('🔗 테스트할 API URL:', apiUrl);
