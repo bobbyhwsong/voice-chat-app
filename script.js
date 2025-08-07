@@ -16,6 +16,9 @@ class VoiceChatInterface {
         this.initializeElements();
         this.initializeSpeechRecognition();
         this.bindEvents();
+        
+        // ngrok URL 자동 업데이트
+        this.initializeNgrokUrlUpdate();
     }
 
     // API 기본 URL 동적 설정
@@ -39,6 +42,108 @@ class VoiceChatInterface {
         
         // 4. 기본값 (로컬 개발용)
         return 'http://localhost:5001';
+    }
+
+    // ngrok URL 자동 감지 및 업데이트
+    async updateNgrokUrl() {
+        try {
+            // 로컬 서버에서 ngrok URL 가져오기
+            const response = await fetch('http://localhost:5001/api/ngrok-url', {
+                method: 'GET',
+                headers: {
+                    'Content-Type': 'application/json',
+                }
+            });
+            
+            const data = await response.json();
+            
+            if (data.status === 'success' && data.ngrok_url) {
+                // ngrok URL을 전역 변수로 설정
+                window.API_BASE_URL = data.ngrok_url;
+                this.apiBaseUrl = data.ngrok_url;
+                
+                console.log('✅ ngrok URL 자동 업데이트:', data.ngrok_url);
+                
+                // URL 표시 (선택사항)
+                this.showNgrokUrlInfo(data.ngrok_url);
+                
+                return data.ngrok_url;
+            } else {
+                console.log('⚠️ ngrok URL을 가져올 수 없습니다:', data.message);
+                return null;
+            }
+        } catch (error) {
+            console.log('⚠️ ngrok URL 업데이트 실패 (로컬 서버에 접근할 수 없음):', error.message);
+            return null;
+        }
+    }
+
+    // ngrok URL 자동 업데이트 초기화
+    async initializeNgrokUrlUpdate() {
+        // 페이지 로드 시 즉시 시도
+        await this.updateNgrokUrl();
+        
+        // 30초마다 ngrok URL 확인
+        setInterval(async () => {
+            await this.updateNgrokUrl();
+        }, 30000); // 30초마다
+        
+        // 네트워크 오류 시 재시도 간격 단축
+        let retryCount = 0;
+        const maxRetries = 5;
+        
+        const retryUpdate = async () => {
+            const result = await this.updateNgrokUrl();
+            if (!result && retryCount < maxRetries) {
+                retryCount++;
+                setTimeout(retryUpdate, 10000); // 10초 후 재시도
+            } else {
+                retryCount = 0; // 성공 시 카운터 리셋
+            }
+        };
+        
+        // 초기 재시도 시작
+        setTimeout(retryUpdate, 10000);
+    }
+
+    // ngrok URL 정보 표시
+    showNgrokUrlInfo(ngrokUrl) {
+        // 기존 정보 제거
+        const existingInfo = document.getElementById('ngrok-url-info');
+        if (existingInfo) {
+            existingInfo.remove();
+        }
+        
+        // 새로운 정보 표시
+        const infoDiv = document.createElement('div');
+        infoDiv.id = 'ngrok-url-info';
+        infoDiv.style.cssText = `
+            position: fixed;
+            top: 10px;
+            right: 10px;
+            background: #4CAF50;
+            color: white;
+            padding: 10px;
+            border-radius: 5px;
+            font-size: 12px;
+            z-index: 1000;
+            max-width: 300px;
+            word-break: break-all;
+        `;
+        infoDiv.innerHTML = `
+            <strong>🌐 ngrok URL:</strong><br>
+            ${ngrokUrl}<br>
+            <small>자동으로 감지되었습니다</small>
+        `;
+        
+        document.body.appendChild(infoDiv);
+        
+        // 5초 후 자동 제거
+        setTimeout(() => {
+            if (infoDiv.parentNode) {
+                infoDiv.remove();
+            }
+        }, 5000);
     }
 
     checkUserData() {

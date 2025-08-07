@@ -241,6 +241,36 @@ def health_check():
     """서버 상태 확인"""
     return jsonify({'status': 'healthy', 'message': '서버가 정상적으로 작동 중입니다.'})
 
+@app.route('/api/ngrok-url', methods=['GET'])
+def get_ngrok_url():
+    """ngrok URL 제공"""
+    try:
+        import requests
+        response = requests.get('http://localhost:4040/api/tunnels', timeout=5)
+        if response.status_code == 200:
+            tunnels = response.json()
+            for tunnel in tunnels.get('tunnels', []):
+                if tunnel.get('proto') == 'https':
+                    return jsonify({
+                        'status': 'success',
+                        'ngrok_url': tunnel.get('public_url'),
+                        'message': 'ngrok URL을 성공적으로 가져왔습니다.'
+                    })
+        
+        return jsonify({
+            'status': 'error',
+            'message': 'ngrok 터널을 찾을 수 없습니다.',
+            'ngrok_url': None
+        }), 404
+        
+    except Exception as e:
+        logger.error(f"ngrok URL 조회 오류: {str(e)}")
+        return jsonify({
+            'status': 'error',
+            'message': 'ngrok URL 조회 중 오류가 발생했습니다.',
+            'ngrok_url': None
+        }), 500
+
 @app.route('/api/save-user-data', methods=['POST'])
 def save_user_data():
     """사용자 정보와 증상 데이터 저장"""

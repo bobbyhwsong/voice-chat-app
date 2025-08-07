@@ -1,0 +1,193 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ngrok URL 자동 감지 테스트</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
+            background-color: #f5f5f5;
+        }
+        .container {
+            background: white;
+            padding: 20px;
+            border-radius: 10px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        .status {
+            padding: 10px;
+            margin: 10px 0;
+            border-radius: 5px;
+            font-weight: bold;
+        }
+        .success { background-color: #d4edda; color: #155724; }
+        .error { background-color: #f8d7da; color: #721c24; }
+        .info { background-color: #d1ecf1; color: #0c5460; }
+        button {
+            background-color: #007bff;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 5px;
+            cursor: pointer;
+            margin: 5px;
+        }
+        button:hover {
+            background-color: #0056b3;
+        }
+        .url-display {
+            background-color: #f8f9fa;
+            padding: 10px;
+            border-radius: 5px;
+            font-family: monospace;
+            word-break: break-all;
+            margin: 10px 0;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🌐 ngrok URL 자동 감지 테스트</h1>
+        
+        <div id="status" class="status info">
+            초기화 중...
+        </div>
+        
+        <div id="urlInfo" class="url-display" style="display: none;">
+            <strong>현재 ngrok URL:</strong><br>
+            <span id="currentUrl"></span>
+        </div>
+        
+        <div>
+            <button onclick="testNgrokUrl()">🔄 ngrok URL 다시 확인</button>
+            <button onclick="testApiConnection()">🔗 API 연결 테스트</button>
+            <button onclick="clearStatus()">🧹 상태 초기화</button>
+        </div>
+        
+        <div id="log" style="margin-top: 20px; max-height: 300px; overflow-y: auto; background-color: #f8f9fa; padding: 10px; border-radius: 5px;">
+            <strong>로그:</strong><br>
+            <div id="logContent"></div>
+        </div>
+    </div>
+
+    <script>
+        let currentNgrokUrl = null;
+        
+        function log(message) {
+            const logContent = document.getElementById('logContent');
+            const timestamp = new Date().toLocaleTimeString();
+            logContent.innerHTML += `[${timestamp}] ${message}<br>`;
+            logContent.scrollTop = logContent.scrollHeight;
+        }
+        
+        function updateStatus(message, type = 'info') {
+            const statusDiv = document.getElementById('status');
+            statusDiv.textContent = message;
+            statusDiv.className = `status ${type}`;
+        }
+        
+        function updateUrlDisplay(url) {
+            const urlInfo = document.getElementById('urlInfo');
+            const currentUrl = document.getElementById('currentUrl');
+            
+            if (url) {
+                currentUrl.textContent = url;
+                urlInfo.style.display = 'block';
+                currentNgrokUrl = url;
+            } else {
+                urlInfo.style.display = 'none';
+                currentNgrokUrl = null;
+            }
+        }
+        
+        async function updateNgrokUrl() {
+            try {
+                log('🔄 ngrok URL 확인 중...');
+                
+                const response = await fetch('http://localhost:5001/api/ngrok-url', {
+                    method: 'GET',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    }
+                });
+                
+                const data = await response.json();
+                
+                if (data.status === 'success' && data.ngrok_url) {
+                    log(`✅ ngrok URL 감지 성공: ${data.ngrok_url}`);
+                    updateStatus('ngrok URL을 성공적으로 감지했습니다!', 'success');
+                    updateUrlDisplay(data.ngrok_url);
+                    return data.ngrok_url;
+                } else {
+                    log(`⚠️ ngrok URL 감지 실패: ${data.message}`);
+                    updateStatus('ngrok URL을 찾을 수 없습니다.', 'error');
+                    updateUrlDisplay(null);
+                    return null;
+                }
+            } catch (error) {
+                log(`❌ ngrok URL 확인 오류: ${error.message}`);
+                updateStatus('로컬 서버에 접근할 수 없습니다.', 'error');
+                updateUrlDisplay(null);
+                return null;
+            }
+        }
+        
+        async function testApiConnection() {
+            if (!currentNgrokUrl) {
+                log('❌ ngrok URL이 없습니다. 먼저 URL을 확인하세요.');
+                return;
+            }
+            
+            try {
+                log(`🔗 API 연결 테스트 중: ${currentNgrokUrl}/api/health`);
+                
+                const response = await fetch(`${currentNgrokUrl}/api/health`, {
+                    method: 'GET',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    }
+                });
+                
+                const data = await response.json();
+                
+                if (data.status === 'healthy') {
+                    log('✅ API 연결 성공!');
+                    updateStatus('API 연결이 정상입니다!', 'success');
+                } else {
+                    log('⚠️ API 응답이 예상과 다릅니다.');
+                    updateStatus('API 응답이 예상과 다릅니다.', 'error');
+                }
+            } catch (error) {
+                log(`❌ API 연결 실패: ${error.message}`);
+                updateStatus('API 연결에 실패했습니다.', 'error');
+            }
+        }
+        
+        function testNgrokUrl() {
+            updateNgrokUrl();
+        }
+        
+        function clearStatus() {
+            updateStatus('상태가 초기화되었습니다.', 'info');
+            updateUrlDisplay(null);
+            document.getElementById('logContent').innerHTML = '';
+            log('🧹 상태가 초기화되었습니다.');
+        }
+        
+        // 페이지 로드 시 자동으로 ngrok URL 확인
+        window.addEventListener('load', async () => {
+            log('🚀 페이지 로드됨 - ngrok URL 자동 확인 시작');
+            await updateNgrokUrl();
+            
+            // 30초마다 자동으로 확인
+            setInterval(async () => {
+                await updateNgrokUrl();
+            }, 30000);
+        });
+    </script>
+</body>
+</html>
