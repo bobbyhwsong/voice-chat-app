@@ -170,12 +170,15 @@
                 const controller = new AbortController();
                 const timeoutId = setTimeout(() => controller.abort(), 10000); // 10초 타임아웃
                 
-                // 헬스 체크 API 호출
+                // 헬스 체크 API 호출 (CORS 문제 해결을 위한 추가 옵션)
                 const response = await fetch(`${apiUrl}/api/health`, {
                     method: 'GET',
                     headers: {
                         'Content-Type': 'application/json',
+                        'Accept': 'application/json',
                     },
+                    mode: 'cors',
+                    credentials: 'omit',
                     signal: controller.signal
                 });
                 
@@ -202,19 +205,33 @@
                 }
             } catch (error) {
                 let errorMessage = error.message;
+                let solution = '';
+                
                 if (error.name === 'AbortError') {
                     errorMessage = '요청 시간 초과 (10초)';
-                } else if (error.message.includes('CORS')) {
+                    solution = '네트워크 연결을 확인하세요';
+                } else if (error.message.includes('CORS') || error.message.includes('cross-origin')) {
                     errorMessage = 'CORS 오류: 브라우저에서 차단됨';
+                    solution = 'ngrok URL이 올바른지 확인하세요. 새로운 ngrok URL이 생성되었을 수 있습니다.';
+                } else if (error.message.includes('Failed to fetch')) {
+                    errorMessage = '네트워크 연결 실패';
+                    solution = 'ngrok이 실행 중인지 확인하세요';
+                } else if (error.message.includes('net::ERR_')) {
+                    errorMessage = '네트워크 오류';
+                    solution = 'ngrok 터널이 활성화되어 있는지 확인하세요';
                 }
                 
                 statusDiv.innerHTML = `
                     <div class="error">
                         ❌ API 연결 오류<br>
                         📊 오류: ${errorMessage}<br>
-                        💡 해결방법: ngrok이 실행 중인지 확인하세요
+                        🔗 시도한 URL: ${apiUrl}<br>
+                        💡 해결방법: ${solution}<br>
+                        🔧 추가 정보: 브라우저 개발자 도구(F12)에서 Network 탭을 확인하세요
                     </div>
                 `;
+                
+                console.error('API 연결 오류 상세:', error);
             }
         }
         
