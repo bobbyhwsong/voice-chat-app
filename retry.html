@@ -38,6 +38,9 @@
                                 <span class="mic-icon">🎤</span>
                                 <span class="mic-text">음성</span>
                             </button>
+                            <button id="stopVoiceBtn" class="stop-voice-btn" title="음성 멈춤">
+                                <span class="stop-icon">⏹️</span>
+                            </button>
                             <button id="sendBtn" class="send-btn">전송</button>
                         </div>
                         <div class="voice-status" id="voiceStatus"></div>
@@ -45,7 +48,7 @@
                     
                     <!-- 버튼 영역 (입력창 바로 아래) -->
                     <div class="button-area">
-                        <button id="clearBtn" class="clear-btn">🔄 대화 초기화</button>
+                        <button id="clearBtn" class="clear-btn" title="대화 초기화">🔄</button>
                         <button id="viewLogsBtn" class="logs-btn">📋 이전 대화 보기</button>
                         <button id="cheatsheetBtn" class="cheatsheet-btn" onclick="window.location.href='cheatsheet.html'">📋 치트시트 생성하기</button>
                     </div>

@@ -209,6 +209,35 @@
         </div>
     </div>
     
+    <!-- 팝업 모달 -->
+    <div id="feedbackPopup" class="popup-overlay" style="display: none;">
+        <div class="popup-content">
+            <div class="popup-header">
+                <h3>🎉 음성 분석 완료!</h3>
+                <button class="popup-close" onclick="closeFeedbackPopup()">&times;</button>
+            </div>
+            <div class="popup-body">
+                <div class="voice-analysis">
+                    <h4>🎤 음성 분석 결과</h4>
+                    <p>분석 중입니다...</p>
+                </div>
+                
+                <div class="research-links">
+                    <h4>📚 관련 연구 및 조사</h4>
+                    <p>사람들이 생각보다 북한이탈주민에 관심이 많지 않을 수 있습니다!</p>
+                    <ul>
+                        <li><a href="https://www.kihasa.re.kr/web/publication/research/view.do?key=169" target="_blank">한국보건사회연구원 - 북한이탈주민 사회통합 실태조사</a></li>
+                        <li><a href="https://www.unikorea.go.kr/unikorea/business/statistics/" target="_blank">통일부 - 북한이탈주민 정착 지원 현황</a></li>
+                        <li><a href="https://www.korea.kr/news/pressReleaseView.do?newsId=156456789" target="_blank">정부24 - 북한이탈주민 인식 개선 캠페인</a></li>
+                    </ul>
+                </div>
+            </div>
+            <div class="popup-footer">
+                <button class="popup-btn" onclick="closeFeedbackPopup()">확인</button>
+            </div>
+        </div>
+    </div>
+    
     <script src="feedback.js"></script>
     <script>
         // URL 파라미터에서 백엔드 API URL 설정

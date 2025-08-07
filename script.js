@@ -5,6 +5,7 @@ class VoiceChatInterface {
         this.recognition = null;
         this.synthesis = window.speechSynthesis;
         this.currentAudio = null; // 현재 재생 중인 오디오 추적
+        this.messageAdded = false; // 메시지 추가 여부 추적
         
         // API URL 동적 설정
         this.apiBaseUrl = this.getApiBaseUrl();
@@ -63,6 +64,7 @@ class VoiceChatInterface {
         this.textInput = document.getElementById('textInput');
         this.sendBtn = document.getElementById('sendBtn');
         this.voiceBtn = document.getElementById('voiceBtn');
+        this.stopVoiceBtn = document.getElementById('stopVoiceBtn');
         this.voiceStatus = document.getElementById('voiceStatus');
         this.clearBtn = document.getElementById('clearBtn');
         this.viewLogsBtn = document.getElementById('viewLogsBtn');
@@ -112,6 +114,14 @@ class VoiceChatInterface {
     // 현재 재생 중인 오디오 중단
     stopCurrentAudio() {
         if (this.currentAudio) {
+            // 이벤트 리스너 제거
+            this.currentAudio.onended = null;
+            this.currentAudio.onerror = null;
+            this.currentAudio.onloadstart = null;
+            this.currentAudio.oncanplay = null;
+            this.currentAudio.onplay = null;
+            
+            // 오디오 중단
             this.currentAudio.pause();
             this.currentAudio.currentTime = 0;
             this.currentAudio = null;
@@ -121,6 +131,47 @@ class VoiceChatInterface {
         if (this.synthesis.speaking) {
             this.synthesis.cancel();
         }
+        
+        console.log('기존 음성이 중단되었습니다.');
+    }
+
+    // 모든 음성 중단 (사용자가 버튼을 눌렀을 때)
+    stopAllAudio() {
+        // 현재 오디오 중단 (이벤트 리스너 제거 후 중단)
+        if (this.currentAudio) {
+            this.currentAudio.onended = null; // 이벤트 리스너 제거
+            this.currentAudio.onerror = null;
+            this.currentAudio.pause();
+            this.currentAudio.currentTime = 0;
+            this.currentAudio = null;
+        }
+        
+        // 브라우저 내장 TTS도 중단
+        if (this.synthesis.speaking) {
+            this.synthesis.cancel();
+        }
+        
+        // 음성 인식도 중단
+        if (this.isRecording && this.recognition) {
+            this.isRecording = false; // 먼저 상태를 false로 설정
+            this.recognition.stop();
+        }
+        
+        // 상태 메시지 업데이트
+        this.voiceStatus.textContent = '음성이 중단되었습니다.';
+        
+        // 버튼 상태 업데이트
+        this.voiceBtn.classList.remove('recording');
+        this.voiceBtn.querySelector('.mic-text').textContent = '음성';
+        
+        // 음성 멈춤 버튼 비활성화
+        this.stopVoiceBtn.disabled = true;
+        
+        // 3초 후 음성 멈춤 버튼 다시 활성화
+        setTimeout(() => {
+            this.stopVoiceBtn.disabled = false;
+            this.voiceStatus.textContent = '';
+        }, 3000);
     }
 
     bindEvents() {
@@ -135,7 +186,8 @@ class VoiceChatInterface {
         // 음성 입력
         this.voiceBtn.addEventListener('click', () => this.toggleVoiceRecording());
 
-
+        // 음성 멈춤
+        this.stopVoiceBtn.addEventListener('click', () => this.stopAllAudio());
 
         // 대화 초기화
         this.clearBtn.addEventListener('click', () => this.clearConversation());
@@ -228,22 +280,22 @@ class VoiceChatInterface {
                 },
                 body: JSON.stringify({
                     message: userMessage,
-                    participant_id: participantId
+                    participant_id: participantId,
+                    page_type: 'chat'  // chat.html 페이지 타입
                 })
             });
 
             const data = await response.json();
             
-            // 로딩 메시지 제거
-            const loadingMessage = this.chatMessages.lastElementChild;
-            if (loadingMessage && loadingMessage.querySelector('.message-content').textContent === '생각 중입니다...') {
-                loadingMessage.remove();
-            }
-
             if (data.status === 'success') {
-                // 음성과 함께 메시지 표시 (음성이 준비되면 채팅도 표시)
-                this.addMessageWithVoice(data.response, 'bot');
+                // 로딩 메시지를 실제 응답으로 교체
+                this.replaceLoadingMessage(data.response);
             } else {
+                // 로딩 메시지 제거
+                const loadingMessage = this.chatMessages.lastElementChild;
+                if (loadingMessage && loadingMessage.querySelector('.message-content').textContent === '생각 중입니다...') {
+                    loadingMessage.remove();
+                }
                 this.addMessage('죄송합니다. 응답을 생성하는 중에 오류가 발생했습니다.', 'bot');
             }
             
@@ -262,7 +314,7 @@ class VoiceChatInterface {
 
     async speakMessage(text) {
         try {
-            // 이전 오디오 중단
+            // 이전 오디오 중단 (더 확실하게)
             this.stopCurrentAudio();
             
             // ElevenLabs TTS API 호출
@@ -307,6 +359,8 @@ class VoiceChatInterface {
                     this.fallbackTTS(text);
                 };
                 
+                // 재생 시작 전 한 번 더 확인
+                this.stopCurrentAudio();
                 await audio.play();
                 
             } else {
@@ -322,10 +376,29 @@ class VoiceChatInterface {
         }
     }
 
+    // 로딩 메시지를 실제 응답으로 교체
+    replaceLoadingMessage(response) {
+        const loadingMessage = this.chatMessages.lastElementChild;
+        if (loadingMessage && loadingMessage.querySelector('.message-content').textContent === '생각 중입니다...') {
+            // 로딩 메시지 제거
+            loadingMessage.remove();
+        }
+        
+        // 음성과 함께 메시지 표시 (음성이 준비되면 채팅도 표시)
+        this.addMessageWithVoice(response, 'bot');
+    }
+
     async speakMessageAndShowChat(text, sender) {
         try {
-            // 이전 오디오 중단
+            // 이전 오디오 중단 (더 확실하게)
             this.stopCurrentAudio();
+            
+            // 메시지 추가 플래그 초기화
+            this.messageAdded = false;
+            
+            // 먼저 채팅 메시지를 표시 (음성과 관계없이)
+            this.addMessage(text, sender, false);
+            this.messageAdded = true;
             
             // ElevenLabs TTS API 호출
             // 사용자 ID 가져오기
@@ -353,10 +426,12 @@ class VoiceChatInterface {
                 // 현재 오디오 추적
                 this.currentAudio = audio;
                 
-                // 오디오가 로드되면 채팅 메시지 표시
+                // 오디오가 로드되면 음성 재생 시작
                 audio.oncanplay = () => {
-                    console.log('ElevenLabs 음성 준비 완료 - 채팅 메시지 표시');
-                    this.addMessage(text, sender, false); // 채팅 메시지 표시 (음성 재생 없이)
+                    console.log('ElevenLabs 음성 준비 완료 - 음성 재생 시작');
+                    // 재생 시작 전 한 번 더 확인
+                    this.stopCurrentAudio();
+                    audio.play();
                 };
                 
                 audio.onloadstart = () => {
@@ -372,23 +447,25 @@ class VoiceChatInterface {
                     console.error('ElevenLabs 음성 재생 오류:', event.error);
                     this.currentAudio = null;
                     // 오류 시 브라우저 내장 TTS로 폴백
-                    this.fallbackTTSWithChat(text, sender);
+                    this.fallbackTTS(text);
                 };
                 
                 // 오디오 로드 시작
                 await audio.load();
+                // 재생 시작 전 한 번 더 확인
+                this.stopCurrentAudio();
                 await audio.play();
                 
             } else {
                 console.error('ElevenLabs TTS 오류:', data.error);
                 // 오류 시 브라우저 내장 TTS로 폴백
-                this.fallbackTTSWithChat(text, sender);
+                this.fallbackTTS(text);
             }
             
         } catch (error) {
             console.error('ElevenLabs TTS 네트워크 오류:', error);
             // 오류 시 브라우저 내장 TTS로 폴백
-            this.fallbackTTSWithChat(text, sender);
+            this.fallbackTTS(text);
         }
     }
 
@@ -412,6 +489,8 @@ class VoiceChatInterface {
             console.error('브라우저 내장 TTS 오류:', event.error);
         };
 
+        // TTS 시작 전 한 번 더 확인
+        this.stopCurrentAudio();
         this.synthesis.speak(utterance);
     }
 
@@ -419,8 +498,11 @@ class VoiceChatInterface {
         // 브라우저 내장 TTS와 함께 채팅 표시 (폴백)
         this.stopCurrentAudio(); // 이전 음성 중단
 
-        // 채팅 메시지 먼저 표시
-        this.addMessage(text, sender, false);
+        // 채팅 메시지가 이미 표시되었는지 확인
+        if (!this.messageAdded) {
+            this.addMessage(text, sender, false);
+            this.messageAdded = true;
+        }
 
         const utterance = new SpeechSynthesisUtterance(text);
         utterance.lang = 'ko-KR';
@@ -438,6 +520,8 @@ class VoiceChatInterface {
             console.error('브라우저 내장 TTS 오류:', event.error);
         };
 
+        // TTS 시작 전 한 번 더 확인
+        this.stopCurrentAudio();
         this.synthesis.speak(utterance);
     }
 
@@ -491,7 +575,7 @@ class VoiceChatInterface {
             const userData = JSON.parse(localStorage.getItem('userData') || '{}');
             const participantId = userData.participantId || null;
             
-            const response = await fetch(`${this.apiBaseUrl}/api/logs?participant_id=${participantId || ''}`);
+            const response = await fetch(`${this.apiBaseUrl}/api/logs?participant_id=${participantId || ''}&page_type=chat`);
             const data = await response.json();
             
             if (data.status === 'success') {

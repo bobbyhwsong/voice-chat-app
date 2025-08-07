@@ -441,4 +441,212 @@ header p {
     .feedback-section h2 {
         font-size: 1.5rem;
     }
+}
+
+/* 팝업 모달 스타일 */
+.popup-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(0, 0, 0, 0.5);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 1000;
+    animation: fadeIn 0.3s ease;
+}
+
+.popup-content {
+    background: white;
+    border-radius: 20px;
+    box-shadow: 0 20px 40px rgba(0, 0, 0, 0.2);
+    width: 90%;
+    max-width: 600px;
+    max-height: 80vh;
+    overflow-y: auto;
+    animation: slideIn 0.3s ease;
+}
+
+.popup-header {
+    background: linear-gradient(135deg, #4CAF50 0%, #45a049 100%);
+    color: white;
+    padding: 20px 30px;
+    border-radius: 20px 20px 0 0;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.popup-header h3 {
+    margin: 0;
+    font-size: 1.5rem;
+    font-weight: 300;
+}
+
+.popup-close {
+    background: none;
+    border: none;
+    color: white;
+    font-size: 2rem;
+    cursor: pointer;
+    padding: 0;
+    width: 30px;
+    height: 30px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 50%;
+    transition: background-color 0.3s ease;
+}
+
+.popup-close:hover {
+    background: rgba(255, 255, 255, 0.2);
+}
+
+.popup-body {
+    padding: 30px;
+}
+
+.voice-analysis {
+    margin-bottom: 30px;
+}
+
+.voice-analysis h4 {
+    color: #4CAF50;
+    margin-bottom: 15px;
+    font-size: 1.2rem;
+}
+
+.voice-analysis p {
+    color: #666;
+    line-height: 1.6;
+    font-size: 1rem;
+}
+
+.voice-analysis p strong {
+    color: #4CAF50;
+    font-weight: 600;
+}
+
+.voice-analysis p em {
+    color: #45a049;
+    font-style: italic;
+    background: #f0f8f0;
+    padding: 8px 12px;
+    border-radius: 6px;
+    display: inline-block;
+    margin-top: 10px;
+}
+
+.research-links h4 {
+    color: #4CAF50;
+    margin-bottom: 15px;
+    font-size: 1.2rem;
+}
+
+.research-links p {
+    color: #666;
+    margin-bottom: 15px;
+    line-height: 1.6;
+}
+
+.research-links ul {
+    list-style: none;
+    padding: 0;
+}
+
+.research-links li {
+    margin-bottom: 12px;
+    padding: 12px;
+    background: #f8f9fa;
+    border-radius: 8px;
+    border-left: 4px solid #4CAF50;
+    transition: all 0.3s ease;
+}
+
+.research-links li:hover {
+    background: #e8f5e8;
+    transform: translateX(5px);
+}
+
+.research-links a {
+    color: #4CAF50;
+    text-decoration: none;
+    font-weight: 500;
+    display: block;
+    line-height: 1.4;
+}
+
+.research-links a:hover {
+    color: #45a049;
+    text-decoration: underline;
+}
+
+.popup-footer {
+    padding: 20px 30px;
+    border-top: 1px solid #e9ecef;
+    text-align: center;
+}
+
+.popup-btn {
+    background: linear-gradient(135deg, #4CAF50 0%, #45a049 100%);
+    color: white;
+    border: none;
+    padding: 12px 30px;
+    border-radius: 25px;
+    font-size: 1rem;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    font-weight: 500;
+}
+
+.popup-btn:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 5px 15px rgba(76, 175, 80, 0.3);
+}
+
+@keyframes fadeIn {
+    from {
+        opacity: 0;
+    }
+    to {
+        opacity: 1;
+    }
+}
+
+@keyframes slideIn {
+    from {
+        transform: translateY(-50px);
+        opacity: 0;
+    }
+    to {
+        transform: translateY(0);
+        opacity: 1;
+    }
+}
+
+/* 모바일 반응형 */
+@media (max-width: 768px) {
+    .popup-content {
+        width: 95%;
+        margin: 20px;
+    }
+    
+    .popup-header {
+        padding: 15px 20px;
+    }
+    
+    .popup-header h3 {
+        font-size: 1.3rem;
+    }
+    
+    .popup-body {
+        padding: 20px;
+    }
+    
+    .research-links li {
+        padding: 10px;
+    }
 } 

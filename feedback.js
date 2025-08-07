@@ -371,6 +371,10 @@ class FeedbackManager {
             console.log('피드백 생성 시작...');
             console.log('대화 로그 개수:', this.conversationLogs.length);
             
+            // 먼저 팝업을 표시하고 대화 분석 결과를 업데이트
+            this.showFeedbackPopup();
+            await this.updateVoiceAnalysis();
+            
             // 평가 실행
             await this.analyzeConversation(this.conversationLogs);
             
@@ -407,6 +411,78 @@ class FeedbackManager {
             alert('피드백 생성 중 오류가 발생했습니다. 다시 시도해주세요.');
         }
     }
+
+    async updateVoiceAnalysis() {
+        try {
+            // 사용자 정보 가져오기
+            const userData = JSON.parse(localStorage.getItem('userData') || '{}');
+            const participantId = userData.participantId || null;
+            
+            // API URL 동적 설정
+            const apiBaseUrl = window.API_BASE_URL || 'http://localhost:5001';
+            
+            // 대화 로그에서 사용자 메시지만 추출
+            const userMessages = this.conversationLogs.map(log => log.user_message);
+            
+            // 음성 분석 요청 데이터 준비
+            const requestData = {
+                messages: userMessages,
+                participant_id: participantId,
+                analysis_type: 'voice_analysis'
+            };
+            
+            console.log('음성 분석 요청 데이터:', requestData);
+            
+            // LLM 음성 분석 API 호출
+            const response = await fetch(`${apiBaseUrl}/api/analyze-voice`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify(requestData)
+            });
+
+            console.log('음성 분석 응답 상태:', response.status);
+            const data = await response.json();
+            console.log('음성 분석 응답 데이터:', data);
+            
+            if (data.status === 'success') {
+                const analysis = data.analysis;
+                this.updateVoiceAnalysisDisplay(analysis);
+            } else {
+                // API 오류 시 기본 메시지 표시
+                this.updateVoiceAnalysisDisplay({
+                    summary: "자연스럽고 편안한 대화를 이어가셨습니다.",
+                    details: "사용자의 대화 스타일이 자연스럽게 느껴졌습니다."
+                });
+            }
+        } catch (error) {
+            console.error('음성 분석 오류:', error);
+            // 오류 시 기본 메시지 표시
+            this.updateVoiceAnalysisDisplay({
+                summary: "자연스럽고 편안한 대화를 이어가셨습니다.",
+                details: "사용자의 대화 스타일이 자연스럽게 느껴졌습니다."
+            });
+        }
+    }
+
+    updateVoiceAnalysisDisplay(analysis) {
+        const voiceAnalysisElement = document.querySelector('.voice-analysis p');
+        if (voiceAnalysisElement) {
+            voiceAnalysisElement.innerHTML = `
+                <strong>분석 결과:</strong> ${analysis.summary}<br><br>
+                <strong>상세 분석:</strong> ${analysis.details}<br><br>
+                <em>💡 걱정하지 마세요! 자연스러운 대화를 잘 이어가고 계십니다.</em>
+            `;
+        }
+    }
+
+    showFeedbackPopup() {
+        const popup = document.getElementById('feedbackPopup');
+        if (popup) {
+            popup.style.display = 'flex';
+        }
+    }
 }
 
 // 토글 기능 함수 (전역 함수)
@@ -425,6 +501,14 @@ function toggleScoreReason(itemKey) {
 async function generateFeedback() {
     if (window.feedbackManager) {
         await window.feedbackManager.generateFeedback();
+    }
+}
+
+// 팝업 닫기 함수 (전역 함수)
+function closeFeedbackPopup() {
+    const popup = document.getElementById('feedbackPopup');
+    if (popup) {
+        popup.style.display = 'none';
     }
 }
 

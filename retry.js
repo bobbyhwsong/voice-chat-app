@@ -10,6 +10,7 @@ class RetryChatInterface {
         this.synthesis = window.speechSynthesis;
         this.quests = [];
         this.completedQuests = new Set();
+        this.messageAdded = false; // 메시지 추가 여부 추적
         
         // API URL 동적 설정
         this.apiBaseUrl = window.API_BASE_URL || 'http://localhost:5001';
@@ -39,6 +40,7 @@ class RetryChatInterface {
         this.textInput = document.getElementById('textInput');
         this.sendBtn = document.getElementById('sendBtn');
         this.voiceBtn = document.getElementById('voiceBtn');
+        this.stopVoiceBtn = document.getElementById('stopVoiceBtn');
         this.voiceStatus = document.getElementById('voiceStatus');
         this.clearBtn = document.getElementById('clearBtn');
         this.viewLogsBtn = document.getElementById('viewLogsBtn');
@@ -96,6 +98,7 @@ class RetryChatInterface {
         });
 
         this.voiceBtn.addEventListener('click', () => this.toggleVoiceRecording());
+        this.stopVoiceBtn.addEventListener('click', () => this.stopAllAudio());
         this.clearBtn.addEventListener('click', () => this.clearConversation());
         this.viewLogsBtn.addEventListener('click', () => this.viewLogs());
     }
@@ -125,6 +128,45 @@ class RetryChatInterface {
         if (this.synthesis.speaking) {
             this.synthesis.cancel();
         }
+    }
+
+    // 모든 음성 중단 (사용자가 버튼을 눌렀을 때)
+    stopAllAudio() {
+        // 현재 오디오 중단 (이벤트 리스너 제거 후 중단)
+        if (this.currentAudio) {
+            this.currentAudio.onended = null; // 이벤트 리스너 제거
+            this.currentAudio.onerror = null;
+            this.currentAudio.pause();
+            this.currentAudio.currentTime = 0;
+            this.currentAudio = null;
+        }
+        
+        // 브라우저 내장 TTS도 중단
+        if (this.synthesis.speaking) {
+            this.synthesis.cancel();
+        }
+        
+        // 음성 인식도 중단
+        if (this.isRecording && this.recognition) {
+            this.isRecording = false; // 먼저 상태를 false로 설정
+            this.recognition.stop();
+        }
+        
+        // 상태 메시지 업데이트
+        this.voiceStatus.textContent = '음성이 중단되었습니다.';
+        
+        // 버튼 상태 업데이트
+        this.voiceBtn.classList.remove('recording');
+        this.voiceBtn.querySelector('.mic-text').textContent = '음성';
+        
+        // 음성 멈춤 버튼 비활성화
+        this.stopVoiceBtn.disabled = true;
+        
+        // 3초 후 음성 멈춤 버튼 다시 활성화
+        setTimeout(() => {
+            this.stopVoiceBtn.disabled = false;
+            this.voiceStatus.textContent = '';
+        }, 3000);
     }
 
     stopRecording() {
@@ -165,8 +207,12 @@ class RetryChatInterface {
         this.scrollToBottom();
         this.optimizeChatArea();
 
-        if (sender === 'bot' && speak) {
-            this.speakMessage(content);
+        if (sender === 'bot' && speak && !this.messageAdded) {
+            this.messageAdded = true;
+            // 음성 재생을 더 오래 지연시켜서 채팅 표시를 우선시
+            setTimeout(() => {
+                this.speakMessage(content);
+            }, 500); // 500ms 지연으로 음성이 충분히 준비된 후 시작되도록
         }
     }
 
@@ -184,22 +230,24 @@ class RetryChatInterface {
                 },
                 body: JSON.stringify({
                     message: userMessage,
-                    participant_id: participantId
+                    participant_id: participantId,
+                    page_type: 'retry'  // retry.html 페이지 타입
                 })
             });
 
             const data = await response.json();
             
-            const loadingMessage = this.chatMessages.lastElementChild;
-            if (loadingMessage && loadingMessage.querySelector('.message-content').textContent === '생각 중입니다...') {
-                loadingMessage.remove();
-            }
-
             if (data.status === 'success') {
-                this.addMessage(data.response, 'bot');
+                // 로딩 메시지를 실제 응답으로 교체
+                this.replaceLoadingMessage(data.response);
                 // 퀘스트 완료 여부를 비동기로 체크
                 this.checkQuestCompletion(userMessage, data.response);
             } else {
+                // 로딩 메시지 제거
+                const loadingMessage = this.chatMessages.lastElementChild;
+                if (loadingMessage && loadingMessage.querySelector('.message-content').textContent === '생각 중입니다...') {
+                    loadingMessage.remove();
+                }
                 this.addMessage('죄송합니다. 응답을 생성하는 중에 오류가 발생했습니다.', 'bot');
             }
             
@@ -215,9 +263,24 @@ class RetryChatInterface {
         }
     }
 
+    // 로딩 메시지를 실제 응답으로 교체
+    replaceLoadingMessage(response) {
+        const loadingMessage = this.chatMessages.lastElementChild;
+        if (loadingMessage && loadingMessage.querySelector('.message-content').textContent === '생각 중입니다...') {
+            // 로딩 메시지 제거
+            loadingMessage.remove();
+        }
+        
+        // 실제 응답 메시지 추가
+        this.addMessage(response, 'bot');
+    }
+
     async speakMessage(text) {
         // 기존 오디오 중단
         this.stopCurrentAudio();
+        
+        // 메시지 추가 플래그 초기화
+        this.messageAdded = false;
         
         try {
             // 사용자 ID 가져오기
@@ -361,7 +424,7 @@ class RetryChatInterface {
             const userData = JSON.parse(localStorage.getItem('userData') || '{}');
             const participantId = userData.participantId || null;
             
-            const response = await fetch(`${this.apiBaseUrl}/api/logs?participant_id=${participantId || ''}`);
+            const response = await fetch(`${this.apiBaseUrl}/api/logs?participant_id=${participantId || ''}&page_type=chat`);
             const data = await response.json();
             
             if (data.status === 'success') {
@@ -378,20 +441,78 @@ class RetryChatInterface {
     showLogsModal(logs, date, participantId) {
         const modal = document.createElement('div');
         modal.className = 'logs-modal';
+        
+        const formatTime = (timestamp) => {
+            const date = new Date(timestamp);
+            return date.toLocaleString('ko-KR', {
+                year: 'numeric',
+                month: '2-digit',
+                day: '2-digit',
+                hour: '2-digit',
+                minute: '2-digit'
+            });
+        };
+
+        const formatMessage = (message) => {
+            // 긴 메시지는 줄바꿈 처리
+            if (message.length > 100) {
+                return message.replace(/(.{100})/g, '$1\n');
+            }
+            return message;
+        };
+
         modal.innerHTML = `
             <div class="logs-modal-content">
                 <div class="logs-modal-header">
-                    <h3>이전 대화 기록 (${date})${participantId ? ` - ${participantId}` : ''}</h3>
-                    <button class="close-btn">&times;</button>
+                    <div class="header-content">
+                        <h3>📋 이전 진료 대화 기록</h3>
+                        <div class="header-info">
+                            <span class="date-info">📅 ${date}</span>
+                            ${participantId ? `<span class="participant-info">👤 ${participantId}</span>` : ''}
+                            <span class="page-info">🏥 진료 연습</span>
+                        </div>
+                    </div>
+                    <button class="close-btn" title="닫기">×</button>
                 </div>
                 <div class="logs-modal-body">
-                    ${logs.length > 0 ? logs.map(log => `
-                        <div class="log-entry">
-                            <div class="log-timestamp">${new Date(log.timestamp).toLocaleString('ko-KR')}</div>
-                            <div class="log-user"><strong>환자:</strong> ${log.user_message}</div>
-                            <div class="log-doctor"><strong>의사:</strong> ${log.bot_response}</div>
+                    ${logs.length > 0 ? `
+                        <div class="logs-summary">
+                            <div class="summary-item">
+                                <span class="summary-icon">💬</span>
+                                <span class="summary-text">총 ${logs.length}개의 대화</span>
+                            </div>
+                            <div class="summary-item">
+                                <span class="summary-icon">⏱️</span>
+                                <span class="summary-text">${formatTime(logs[0]?.timestamp)} ~ ${formatTime(logs[logs.length-1]?.timestamp)}</span>
+                            </div>
                         </div>
-                    `).join('') : '<p>해당 참여자의 로그가 없습니다.</p>'}
+                        <div class="logs-container">
+                            ${logs.map((log, index) => `
+                                <div class="log-entry" style="animation-delay: ${index * 0.1}s;">
+                                    <div class="log-header">
+                                        <div class="log-timestamp">🕐 ${formatTime(log.timestamp)}</div>
+                                        <div class="log-number">#${index + 1}</div>
+                                    </div>
+                                    <div class="log-messages">
+                                        <div class="log-user">
+                                            <div class="message-label">👤 환자</div>
+                                            <div class="message-content">${formatMessage(log.user_message)}</div>
+                                        </div>
+                                        <div class="log-doctor">
+                                            <div class="message-label">👨‍⚕️ 의사</div>
+                                            <div class="message-content">${formatMessage(log.bot_response)}</div>
+                                        </div>
+                                    </div>
+                                </div>
+                            `).join('')}
+                        </div>
+                    ` : `
+                        <div class="empty-logs">
+                            <div class="empty-icon">📭</div>
+                            <h4>대화 기록이 없습니다</h4>
+                            <p>아직 저장된 대화 기록이 없습니다.<br>진료 대화를 시작해보세요!</p>
+                        </div>
+                    `}
                 </div>
             </div>
         `;
@@ -400,14 +521,38 @@ class RetryChatInterface {
 
         const closeBtn = modal.querySelector('.close-btn');
         closeBtn.addEventListener('click', () => {
-            document.body.removeChild(modal);
+            modal.style.animation = 'fadeOut 0.3s ease';
+            setTimeout(() => {
+                if (document.body.contains(modal)) {
+                    document.body.removeChild(modal);
+                }
+            }, 300);
         });
 
         modal.addEventListener('click', (e) => {
             if (e.target === modal) {
-                document.body.removeChild(modal);
+                modal.style.animation = 'fadeOut 0.3s ease';
+                setTimeout(() => {
+                    if (document.body.contains(modal)) {
+                        document.body.removeChild(modal);
+                    }
+                }, 300);
             }
         });
+
+        // ESC 키로 닫기
+        const handleEscKey = (e) => {
+            if (e.key === 'Escape') {
+                modal.style.animation = 'fadeOut 0.3s ease';
+                setTimeout(() => {
+                    if (document.body.contains(modal)) {
+                        document.body.removeChild(modal);
+                    }
+                }, 300);
+                document.removeEventListener('keydown', handleEscKey);
+            }
+        };
+        document.addEventListener('keydown', handleEscKey);
     }
 
     showError(message) {
@@ -464,8 +609,7 @@ class RetryChatInterface {
                         description: reason,
                         grade: grade,
                         icon: this.getCategoryIcon(category),
-                        keywords: this.getCategoryKeywords(category),
-                        improvement_tips: this.getImprovementTips(category)
+                        keywords: this.getCategoryKeywords(category)
                     };
                     
                     this.quests.push(quest);
@@ -485,8 +629,7 @@ class RetryChatInterface {
                             description: reason,
                             grade: grade,
                             icon: this.getCategoryIcon(category),
-                            keywords: this.getCategoryKeywords(category),
-                            improvement_tips: this.getImprovementTips(category)
+                            keywords: this.getCategoryKeywords(category)
                         };
                         
                         this.quests.push(quest);
@@ -515,7 +658,51 @@ class RetryChatInterface {
             'symptom_timing': '증상의 시작 시기와 지속 시간 말하기',
             'communication_clarity': '명확하고 이해하기 쉽게 설명하기',
             'question_asking': '의사에게 적절한 질문하기',
-            'follow_up': '의사의 설명에 대한 확인과 추가 질문하기'
+            'follow_up': '의사의 설명에 대한 확인과 추가 질문하기',
+            'allergy_info': '알레르기 정보 제공하기',
+            'family_history': '가족 병력 언급하기',
+            'lifestyle_info': '생활 습관과 환경 정보 말하기',
+            'current_condition': '현재 상태와 증상 변화 설명하기',
+            'pain_description': '통증의 성격과 강도 설명하기',
+            'symptom_progression': '증상의 진행 과정 설명하기',
+            'treatment_history': '이전 치료 경험 말하기',
+            'medication_side_effects': '약물 부작용 경험 말하기',
+            'emergency_symptoms': '응급 증상 여부 확인하기',
+            'daily_impact': '일상생활에 미치는 영향 설명하기',
+            'stress_factors': '스트레스나 유발 요인 언급하기',
+            'emergency_plan': '응급 상황 대처 계획 수립하기',
+            'prevention_strategy': '예방 전략과 주의사항 확인하기',
+            'recovery_expectation': '회복 과정과 예상 경과 이해하기',
+            'lifestyle_modification': '생활 습관 개선 방안 확인하기',
+            'medication_adherence': '약물 복용 준수 방법 확인하기',
+            'follow_up_appointment': '후속 진료 일정 확인하기',
+            'self_monitoring': '자가 관찰 방법 배우기',
+            'warning_signs': '주의해야 할 증상 인지하기',
+            'dietary_restrictions': '식이 제한사항 확인하기',
+            'activity_restrictions': '활동 제한사항 확인하기',
+            'work_restrictions': '업무 제한사항 확인하기',
+            'emotional_support': '정서적 지원 방법 확인하기',
+            'caregiver_guidance': '보호자 지도사항 확인하기',
+            'community_resources': '지역사회 자원 활용하기',
+            'insurance_coverage': '보험 적용 범위 확인하기',
+            'cost_considerations': '치료 비용 고려사항 확인하기',
+            'alternative_treatments': '대안 치료 방법 확인하기',
+            'clinical_trials': '임상시험 참여 가능성 확인하기',
+            'second_opinion': '다른 의사 의견 청취하기',
+            'specialist_referral': '전문의 진료 의뢰하기',
+            'diagnostic_testing': '진단 검사 과정 이해하기',
+            'treatment_options': '치료 옵션 비교하기',
+            'risk_assessment': '위험도 평가 이해하기',
+            'prognosis_discussion': '예후에 대한 논의하기',
+            'palliative_care': '완화 치료 옵션 확인하기',
+            'rehabilitation_plan': '재활 계획 수립하기',
+            'home_care_instructions': '가정 간호 지침 확인하기',
+            'equipment_needs': '필요한 장비 확인하기',
+            'transportation_arrangements': '이동 수단 준비하기',
+            'financial_assistance': '경제적 지원 방법 확인하기',
+            'legal_considerations': '법적 고려사항 확인하기',
+            'advance_directives': '사전 의료지시서 작성하기',
+            'end_of_life_care': '임종기 돌봄 계획 수립하기'
         };
         return titles[category] || `${category} 개선하기`;
     }
@@ -529,7 +716,51 @@ class RetryChatInterface {
             'symptom_timing': '⏰',
             'communication_clarity': '💬',
             'question_asking': '❓',
-            'follow_up': '🔄'
+            'follow_up': '🔄',
+            'allergy_info': '🤧',
+            'family_history': '👨‍👩‍👧‍👦',
+            'lifestyle_info': '🏃‍♂️',
+            'current_condition': '📊',
+            'pain_description': '😣',
+            'symptom_progression': '📈',
+            'treatment_history': '🩺',
+            'medication_side_effects': '⚠️',
+            'emergency_symptoms': '🚨',
+            'daily_impact': '📅',
+            'stress_factors': '😰',
+            'emergency_plan': '🚑',
+            'prevention_strategy': '🛡️',
+            'recovery_expectation': '📈',
+            'lifestyle_modification': '🏃‍♂️',
+            'medication_adherence': '✅',
+            'follow_up_appointment': '📅',
+            'self_monitoring': '👁️',
+            'warning_signs': '⚠️',
+            'dietary_restrictions': '🍽️',
+            'activity_restrictions': '🚫',
+            'work_restrictions': '💼',
+            'emotional_support': '💝',
+            'caregiver_guidance': '👥',
+            'community_resources': '🏘️',
+            'insurance_coverage': '📋',
+            'cost_considerations': '💰',
+            'alternative_treatments': '🌿',
+            'clinical_trials': '🔬',
+            'second_opinion': '👨‍⚕️',
+            'specialist_referral': '🏥',
+            'diagnostic_testing': '🔬',
+            'treatment_options': '⚖️',
+            'risk_assessment': '📊',
+            'prognosis_discussion': '📋',
+            'palliative_care': '🕊️',
+            'rehabilitation_plan': '🔄',
+            'home_care_instructions': '🏠',
+            'equipment_needs': '🛠️',
+            'transportation_arrangements': '🚗',
+            'financial_assistance': '💳',
+            'legal_considerations': '⚖️',
+            'advance_directives': '📄',
+            'end_of_life_care': '🕯️'
         };
         return icons[category] || '📝';
     }
@@ -543,64 +774,56 @@ class RetryChatInterface {
             'symptom_timing': ['언제', '시작', '부터', '지속', '시간', '기간'],
             'communication_clarity': ['명확', '이해', '설명', '자세히'],
             'question_asking': ['질문', '궁금', '알고', '확인'],
-            'follow_up': ['추가', '더', '그리고', '또한', '확인']
+            'follow_up': ['추가', '더', '그리고', '또한', '확인'],
+            'allergy_info': ['알레르기', '알레르기', '반응', '부작용', '민감'],
+            'family_history': ['가족', '부모', '형제', '유전', '병력'],
+            'lifestyle_info': ['생활', '습관', '운동', '식사', '수면', '직업'],
+            'current_condition': ['현재', '상태', '변화', '악화', '개선'],
+            'pain_description': ['통증', '아픔', '찌르는', '쑤시는', '강도'],
+            'symptom_progression': ['진행', '악화', '개선', '변화', '과정'],
+            'treatment_history': ['치료', '병원', '의사', '처방', '이전'],
+            'medication_side_effects': ['부작용', '부정', '반응', '부담', '불편'],
+            'emergency_symptoms': ['응급', '위험', '심각', '급성', '즉시'],
+            'daily_impact': ['일상', '생활', '영향', '불편', '제한'],
+            'stress_factors': ['스트레스', '유발', '원인', '요인', '상황'],
+            'emergency_plan': ['응급', '대처', '계획', '위험', '상황'],
+            'prevention_strategy': ['예방', '전략', '주의', '방지', '안전'],
+            'recovery_expectation': ['회복', '예상', '경과', '과정', '기간'],
+            'lifestyle_modification': ['생활', '습관', '개선', '변경', '조정'],
+            'medication_adherence': ['약물', '복용', '준수', '규칙', '시간'],
+            'follow_up_appointment': ['후속', '진료', '일정', '예약', '방문'],
+            'self_monitoring': ['자가', '관찰', '체크', '모니터링', '기록'],
+            'warning_signs': ['주의', '증상', '경고', '징후', '위험'],
+            'dietary_restrictions': ['식이', '제한', '음식', '금기', '섭취'],
+            'activity_restrictions': ['활동', '제한', '운동', '금기', '행동'],
+            'work_restrictions': ['업무', '제한', '직장', '일', '근무'],
+            'emotional_support': ['정서', '지원', '감정', '돌봄', '심리'],
+            'caregiver_guidance': ['보호자', '지도', '돌봄', '가족', '관리'],
+            'community_resources': ['지역', '자원', '사회', '지원', '서비스'],
+            'insurance_coverage': ['보험', '적용', '범위', '보장', '혜택'],
+            'cost_considerations': ['비용', '고려', '경제', '돈', '지출'],
+            'alternative_treatments': ['대안', '치료', '방법', '대체', '선택'],
+            'clinical_trials': ['임상', '시험', '연구', '실험', '참여'],
+            'second_opinion': ['다른', '의사', '의견', '청취', '상담'],
+            'specialist_referral': ['전문의', '진료', '의뢰', '전문', '상담'],
+            'diagnostic_testing': ['진단', '검사', '과정', '이해', '절차'],
+            'treatment_options': ['치료', '옵션', '선택', '방법', '비교'],
+            'risk_assessment': ['위험', '평가', '도', '분석', '확률'],
+            'prognosis_discussion': ['예후', '논의', '전망', '예상', '결과'],
+            'palliative_care': ['완화', '치료', '돌봄', '안락', '관리'],
+            'rehabilitation_plan': ['재활', '계획', '복원', '회복', '훈련'],
+            'home_care_instructions': ['가정', '간호', '지침', '돌봄', '관리'],
+            'equipment_needs': ['장비', '필요', '도구', '기구', '설비'],
+            'transportation_arrangements': ['이동', '수단', '교통', '준비', '편의'],
+            'financial_assistance': ['경제', '지원', '도움', '비용', '지원'],
+            'legal_considerations': ['법적', '고려', '사항', '법률', '권리'],
+            'advance_directives': ['사전', '의료', '지시', '서', '서면'],
+            'end_of_life_care': ['임종', '돌봄', '계획', '말기', '관리']
         };
         return keywords[category] || ['개선', '향상'];
     }
 
-    getImprovementTips(category) {
-        const tips = {
-            'symptom_description': [
-                '증상의 구체적인 위치를 말하세요 (예: "오른쪽 복부 아래쪽")',
-                '증상의 강도를 설명하세요 (예: "찌르는 듯한 통증")',
-                '증상이 언제부터 시작되었는지 말하세요',
-                '증상이 지속되는 시간을 구체적으로 말하세요'
-            ],
-            'medical_history': [
-                '과거에 비슷한 증상이 있었는지 말하세요',
-                '알레르기가 있는지 확인하고 언급하세요',
-                '만성 질환이 있다면 반드시 말하세요',
-                '최근 수술이나 입원 경험이 있다면 언급하세요'
-            ],
-            'medication_info': [
-                '현재 복용 중인 모든 약물을 언급하세요',
-                '처방약과 일반약 모두 포함해서 말하세요',
-                '약물 복용 기간을 구체적으로 말하세요',
-                '약물에 대한 부작용이 있었는지 말하세요'
-            ],
-            'symptom_location': [
-                '증상이 나타나는 정확한 부위를 말하세요',
-                '통증이 퍼지는지, 어디로 퍼지는지 설명하세요',
-                '압박했을 때 통증이 심해지는지 말하세요',
-                '특정 자세나 움직임에 따라 증상이 변하는지 설명하세요'
-            ],
-            'symptom_timing': [
-                '증상이 언제부터 시작되었는지 구체적으로 말하세요',
-                '증상이 지속되는 시간을 말하세요',
-                '증상이 하루 중 언제 심해지는지 설명하세요',
-                '증상이 점진적으로 심해졌는지, 갑자기 시작되었는지 말하세요'
-            ],
-            'communication_clarity': [
-                '의학 용어보다는 일상적인 표현을 사용하세요',
-                '증상을 구체적이고 명확하게 설명하세요',
-                '의사의 질문에 정확하게 답변하세요',
-                '이해가 안 되는 부분은 다시 질문하세요'
-            ],
-            'question_asking': [
-                '진단에 대해 구체적으로 질문하세요',
-                '치료 방법에 대해 자세히 물어보세요',
-                '약물의 부작용에 대해 확인하세요',
-                '생활에서 주의할 점을 물어보세요'
-            ],
-            'follow_up': [
-                '의사의 설명을 듣고 이해한 내용을 확인하세요',
-                '추가로 궁금한 점이 있으면 물어보세요',
-                '치료 후 예상되는 경과를 물어보세요',
-                '재검사나 후속 조치가 필요한지 확인하세요'
-            ]
-        };
-        return tips[category] || ['개선을 위해 노력해보세요.'];
-    }
+
 
     loadDefaultQuests() {
         // 기본 퀘스트 (피드백 데이터가 없을 때)
@@ -610,39 +833,21 @@ class RetryChatInterface {
                 title: '증상을 구체적으로 설명하기',
                 description: '어디가, 언제부터, 얼마나 심한지 구체적으로 말해보세요.',
                 icon: '📋',
-                keywords: ['위치', '시작', '강도', '지속'],
-                improvement_tips: [
-                    '증상의 구체적인 위치를 말하세요 (예: "오른쪽 복부 아래쪽")',
-                    '증상의 강도를 설명하세요 (예: "찌르는 듯한 통증")',
-                    '증상이 언제부터 시작되었는지 말하세요',
-                    '증상이 지속되는 시간을 구체적으로 말하세요'
-                ]
+                keywords: ['위치', '시작', '강도', '지속']
             },
             {
                 id: 'medication',
                 title: '복용 중인 약물 언급하기',
                 description: '현재 먹고 있는 약이 있다면 반드시 언급해주세요.',
                 icon: '💊',
-                keywords: ['약', '복용', '처방', '투약'],
-                improvement_tips: [
-                    '현재 복용 중인 모든 약물을 언급하세요',
-                    '처방약과 일반약 모두 포함해서 말하세요',
-                    '약물 복용 기간을 구체적으로 말하세요',
-                    '약물에 대한 부작용이 있었는지 말하세요'
-                ]
+                keywords: ['약', '복용', '처방', '투약']
             },
             {
                 id: 'history',
                 title: '과거 병력과 알레르기 말하기',
                 description: '과거 병력이나 알레르기가 있다면 미리 준비해두세요.',
                 icon: '🏥',
-                keywords: ['과거', '알레르기', '병력', '만성'],
-                improvement_tips: [
-                    '과거에 비슷한 증상이 있었는지 말하세요',
-                    '알레르기가 있는지 확인하고 언급하세요',
-                    '만성 질환이 있다면 반드시 말하세요',
-                    '최근 수술이나 입원 경험이 있다면 언급하세요'
-                ]
+                keywords: ['과거', '알레르기', '병력', '만성']
             }
         ];
 
@@ -661,27 +866,14 @@ class RetryChatInterface {
             
             questElement.innerHTML = `
                 <div class="quest-header">
-                    <div class="quest-title">
+                    <div class="quest-content">
                         <span class="quest-icon">${quest.icon}</span>
-                        ${quest.title}
+                        <div class="quest-description">${quest.description}</div>
                         ${gradeBadge}
                     </div>
                     <div class="quest-checkbox">
                         <input type="checkbox" id="quest-${quest.id}" ${this.completedQuests.has(quest.id) ? 'checked' : ''}>
                         <label for="quest-${quest.id}"></label>
-                    </div>
-                </div>
-                <div class="quest-description">${quest.description}</div>
-                <div class="quest-tips-toggle" data-quest-id="${quest.id}">
-                    <span class="toggle-icon">💡</span>
-                    <span class="toggle-text">팁 보기</span>
-                </div>
-                <div class="quest-tips-content" id="tips-${quest.id}" style="display: none;">
-                    <div class="improvement-tips">
-                        <h4>💡 개선 팁:</h4>
-                        <ul>
-                            ${quest.improvement_tips ? quest.improvement_tips.map(tip => `<li>${tip}</li>`).join('') : '<li>구체적으로 설명해보세요.</li>'}
-                        </ul>
                     </div>
                 </div>
             `;
@@ -691,16 +883,7 @@ class RetryChatInterface {
                 this.toggleQuestCompletion(quest.id);
             });
             
-            // 팁 토글 버튼 이벤트
-            const tipsToggle = questElement.querySelector('.quest-tips-toggle');
-            const tipsContent = questElement.querySelector('.quest-tips-content');
-            
-            tipsToggle.addEventListener('click', () => {
-                const isVisible = tipsContent.style.display !== 'none';
-                tipsContent.style.display = isVisible ? 'none' : 'block';
-                tipsToggle.querySelector('.toggle-text').textContent = isVisible ? '팁 보기' : '팁 숨기기';
-                tipsToggle.querySelector('.toggle-icon').textContent = isVisible ? '💡' : '📖';
-            });
+
             
             this.questList.appendChild(questElement);
         });
@@ -753,8 +936,7 @@ class RetryChatInterface {
                         id: quest.id,
                         title: quest.title,
                         description: quest.description,
-                        keywords: quest.keywords,
-                        improvement_tips: quest.improvement_tips
+                        keywords: quest.keywords
                     })),
                     participant_id: participantId
                 })

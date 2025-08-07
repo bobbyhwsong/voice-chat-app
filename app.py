@@ -84,7 +84,7 @@ def generate_elevenlabs_audio(text):
             "text": text,
             "model_id": "eleven_multilingual_v2",
             "voice_settings": {
-                "speed": 1.3,
+                "speed": 1.2,
                 "stability": 0.5,
                 "similarity_boost": 0.5,
                 "style": 0.0,
@@ -112,17 +112,17 @@ def generate_elevenlabs_audio(text):
         logger.error(f"음성 생성 오류: {str(e)}")
         return None
 
-def save_conversation_log(user_message, bot_response, participant_id=None):
+def save_conversation_log(user_message, bot_response, participant_id=None, page_type="chat"):
     """대화 로그를 파일에 저장"""
     timestamp = datetime.now().strftime("%Y-%m-%d_%H-%M-%S")
     
     # 참여자 ID가 있으면 사용자별 폴더에 저장
     if participant_id:
         user_dir = create_user_directory(participant_id)
-        log_filename = f"medical_conversation_{datetime.now().strftime('%Y%m%d')}.json"
+        log_filename = f"medical_conversation_{page_type}_{datetime.now().strftime('%Y%m%d')}.json"
         log_filepath = os.path.join(user_dir, log_filename)
     else:
-        log_filename = f"medical_conversation_unknown_{datetime.now().strftime('%Y%m%d')}.json"
+        log_filename = f"medical_conversation_{page_type}_unknown_{datetime.now().strftime('%Y%m%d')}.json"
         log_filepath = os.path.join(LOG_DIR, log_filename)
     
     log_entry = {
@@ -130,7 +130,8 @@ def save_conversation_log(user_message, bot_response, participant_id=None):
         "user_message": user_message,
         "bot_response": bot_response,
         "session_id": timestamp,
-        "participant_id": participant_id
+        "participant_id": participant_id,
+        "page_type": page_type
     }
     
     try:
@@ -158,11 +159,12 @@ def chat():
         data = request.get_json()
         user_message = data.get('message', '')
         participant_id = data.get('participant_id', None)
+        page_type = data.get('page_type', 'chat')  # 기본값은 'chat'
         
         if not user_message:
             return jsonify({'error': '메시지가 없습니다.'}), 400
         
-        logger.info(f"사용자 메시지: {user_message} (참여자: {participant_id})")
+        logger.info(f"사용자 메시지: {user_message} (참여자: {participant_id}, 페이지: {page_type})")
         
         # 대화 기록에 사용자 메시지 추가
         conversation_history.append({"role": "user", "content": user_message})
@@ -170,40 +172,38 @@ def chat():
         # OpenAI API 호출
         try:
             response = openai.ChatCompletion.create(
-                model="gpt-3.5-turbo",
+                model="gpt-4o",
                 messages=[
                     {"role": "system", "content": """당신은 50대 후반의 경험 많은 내과 의사입니다. 
 
 성격 특징:
 - 다소 까칠하고 직설적인 성격
-- 환자와 친근하면서도 전문적인 태도
 - 불필요한 공손함보다는 솔직한 소통 선호
 - "그래", "음", "흠" 같은 짧은 반응을 자주 사용
-- 나이 많은 의사다운 경험과 지혜를 바탕으로 한 진료
 
 진료 스타일:
 - 핵심적인 진료 질문과 답변
 - 불필요한 자세한 설명보다는 핵심만 전달
 - 때로는 짧은 한마디로 끝내기도 함
-- 의료 전문 용어를 적절히 사용
+- 의료 전문 용어 및 존대말을 적절히 사용
 - 진료 상황에 맞는 적절한 톤과 어조
 
 진료 시나리오:
 - 증상 문진, 진찰, 진단, 처방 등 의료 과정 진행
 - 환자의 증상을 정확히 파악하고 적절한 진료 제공
 - 필요시 추가 검사나 상담을 권유
-- 한국어로 진료하되 자연스럽게"""},
+- 한국어로 진료하되 간결하게 진행"""},
                     *conversation_history
                 ],
                 max_tokens=300,
-                temperature=0.8
+                temperature=0.7
             )
             
             bot_response = response.choices[0].message.content
             logger.info(f"봇 응답: {bot_response}")
             
-            # 대화 로그 저장
-            save_conversation_log(user_message, bot_response, participant_id)
+            # 대화 로그 저장 (페이지 타입 포함)
+            save_conversation_log(user_message, bot_response, participant_id, page_type)
             
             # 대화 기록에 봇 응답 추가
             conversation_history.append({"role": "assistant", "content": bot_response})
@@ -284,13 +284,14 @@ def get_logs():
     try:
         date = request.args.get('date', datetime.now().strftime('%Y%m%d'))
         participant_id = request.args.get('participant_id', None)
+        page_type = request.args.get('page_type', 'chat')  # 기본값은 'chat'
         
         if participant_id:
             user_dir = create_user_directory(participant_id)
-            log_filename = f"medical_conversation_{date}.json"
+            log_filename = f"medical_conversation_{page_type}_{date}.json"
             log_filepath = os.path.join(user_dir, log_filename)
         else:
-            log_filename = f"medical_conversation_unknown_{date}.json"
+            log_filename = f"medical_conversation_{page_type}_unknown_{date}.json"
             log_filepath = os.path.join(LOG_DIR, log_filename)
         
         if os.path.exists(log_filepath):
@@ -300,7 +301,8 @@ def get_logs():
                 'status': 'success',
                 'logs': logs,
                 'date': date,
-                'participant_id': participant_id
+                'participant_id': participant_id,
+                'page_type': page_type
             })
         else:
             return jsonify({
@@ -308,7 +310,8 @@ def get_logs():
                 'logs': [],
                 'date': date,
                 'participant_id': participant_id,
-                'message': '해당 참여자의 로그가 없습니다.'
+                'page_type': page_type,
+                'message': f'해당 참여자의 {page_type} 로그가 없습니다.'
             })
             
     except Exception as e:
@@ -751,7 +754,7 @@ def generate_cheatsheet():
 피드백 평가:
 {json.dumps(feedback_data.get('evaluation_result', {}), ensure_ascii=False, indent=2)}
 
-다음 JSON 형식으로 응답해주세요:
+다음 JSON 형식으로 응답해주세요. title은 똑같이 가져가고, content는 최대한 유저가 말해야하는 대사로 구성해주세요:
 {{
     "cheatsheet": {{
         "title": "진료 스크립트",
@@ -762,57 +765,75 @@ def generate_cheatsheet():
         }},
         "script": [
             {{
-                "title": "증상 설명",
-                "content": "의사에게 처음 말할 증상 설명 스크립트",
-                "example": "어제부터 머리 뒤쪽이 지속적으로 아파요"
+                "title": "증상 위치",
+                "content": "어디가 아픈지 구체적으로 말할 스크립트"
             }},
             {{
-                "title": "과거 병력",
-                "content": "의사가 물어볼 과거 병력에 대한 답변 스크립트",
-                "example": "알레르기는 없고, 만성질환도 없습니다"
-            }}
-        ],
-        "questions": [
-            {{
-                "question": "증상이 언제부터 시작되었나요?",
-                "answer": "구체적인 답변 예시"
+                "title": "증상 시작 시기",
+                "content": "언제부터 아픈지 정확히 말할 스크립트"
             }},
             {{
-                "question": "어떤 상황에서 증상이 심해지나요?",
-                "answer": "상황별 답변 예시"
+                "title": "증상 강도",
+                "content": "증상이 얼마나 심한지 설명할 스크립트"
             }},
             {{
-                "question": "복용 중인 약이 있나요?",
-                "answer": "약물 정보 답변 예시"
+                "title": "현재 복용 약물",
+                "content": "현재 복용 중인 약물을 설명할 스크립트"
+            }},
+            {{
+                "title": "알레르기 정보",
+                "content": "알레르기 여부를 설명할 스크립트"
             }}
         ],
         "listening": [
-            "진찰 결과",
-            "진단명과 근거",
-            "처방약 정보",
-            "복용법과 주의사항"
-        ],
-        "my_questions": [
-            "이 약의 부작용은 무엇인가요?",
-            "언제까지 복용해야 하나요?",
-            "증상이 악화되면 어떻게 해야 하나요?",
-            "다음 진료는 언제 받아야 하나요?"
+            {{
+                "title": "진단명과 근거",
+                "content": "의사가 말할 진단명과 그 근거"
+            }},
+            {{
+                "title": "처방약 정보",
+                "content": "의사가 말할 처방약의 이름과 복용 방법"
+            }},
+            {{
+                "title": "부작용과 주의사항",
+                "content": "의사가 말할 약의 부작용과 주의사항"
+            }},
+            {{
+                "title": "다음 진료 계획",
+                "content": "의사가 말할 다음 진료 계획과 재방문 시기"
+            }},
+            {{
+                "title": "응급 상황 대응",
+                "content": "의사가 말할 증상 악화 시 언제 다시 와야 하는지"
+            }}
         ],
         "precautions": [
-            "의사의 설명이 이해되지 않으면 반드시 다시 물어보세요",
-            "약을 복용하기 전에 부작용을 꼭 확인하세요",
-            "증상이 예상과 다르게 변화하면 즉시 병원에 연락하세요",
-            "다음 진료 일정을 정확히 확인하고 기록하세요"
+            {{
+                "title": "의사소통 주의사항",
+                "content": "의사의 설명이 이해되지 않으면 반드시 다시 물어보세요"
+            }},
+            {{
+                "title": "약물 복용 주의사항",
+                "content": "약을 복용하기 전에 부작용을 꼭 확인하세요"
+            }},
+            {{
+                "title": "증상 변화 주의사항",
+                "content": "증상이 예상과 다르게 변화하면 즉시 병원에 연락하세요"
+            }},
+            {{
+                "title": "진료 일정 확인",
+                "content": "다음 진료 일정을 정확히 확인하고 기록하세요"
+            }}
         ]
     }}
 }}
 
 스크립트 생성 시 주의사항:
 - 실제 진료 중에 바로 보고 말할 수 있는 간단하고 명확한 표현 사용
-- 피드백에서 지적된 개선점들을 반영
-- 구체적이고 실용적인 정보 포함
-- 각 섹션별로 구분하여 쉽게 찾을 수 있도록 구성
-- 실제 말할 수 있는 자연스러운 표현 사용"""
+- 피드백에서 지적된 개선점들을 반영하여 구체적인 스크립트 제공
+- 각 항목에 핵심 키워드를 포함하여 기억하기 쉽게 구성
+- 실제 말할 수 있는 자연스러운 표현 사용
+- guideline.html의 핵심 체크리스트 5개를 기준으로 script와 listening 구성"""
         
         # LLM 호출
         response = openai.ChatCompletion.create(
@@ -976,6 +997,104 @@ def analyze_quest():
             'error': str(e)
         }), 500
 
+@app.route('/api/analyze-voice', methods=['POST'])
+def analyze_voice():
+    """사용자의 대화 로그를 분석하여 음성/언어 패턴 분석"""
+    try:
+        data = request.get_json()
+        messages = data.get('messages', [])
+        participant_id = data.get('participant_id')
+        analysis_type = data.get('analysis_type', 'voice_analysis')
+        
+        if not messages:
+            return jsonify({
+                'status': 'error',
+                'error': '분석할 메시지가 없습니다.'
+            }), 400
+        
+        # 사용자별 디렉토리 생성
+        user_dir = create_user_directory(participant_id) if participant_id else LOG_DIR
+        
+        # 분석을 위한 프롬프트 생성
+        analysis_prompt = f"""
+다음은 사용자가 의료진료 연습 중에 한 대화 내용입니다. 
+이 대화를 분석하여 사용자의 언어 사용 패턴, 톤, 스타일을 평가해주세요.
+
+대화 내용:
+{chr(10).join([f"- {msg}" for msg in messages])}
+
+다음 기준으로 분석해주세요:
+1. 언어 사용의 자연스러움
+2. 대화의 편안함과 자신감
+3. 의사소통의 명확성
+4. 북한 방언이나 특별한 언어 패턴의 유무
+
+분석 결과를 다음 JSON 형식으로 응답해주세요:
+{{
+    "summary": "간단한 분석 요약 (1-2문장)",
+    "details": "상세한 분석 내용 (구체적인 예시와 함께)",
+    "confidence_score": 0.85,
+    "positive_aspects": ["자연스러운 대화", "명확한 의사전달"],
+    "suggestions": ["더 자신감 있게 말하기", "질문을 더 적극적으로 하기"]
+}}
+
+분석 시 주의사항:
+- 긍정적인 면을 강조하세요
+- 걱정하지 말라고 격려하는 톤을 유지하세요
+- 구체적인 대화 내용을 언급하면서 분석하세요
+"""
+
+        # OpenAI API 호출
+        response = openai.ChatCompletion.create(
+            model="gpt-3.5-turbo",
+            messages=[
+                {"role": "system", "content": "당신은 언어 분석 전문가입니다. 사용자의 대화를 분석하여 긍정적이고 격려적인 피드백을 제공합니다."},
+                {"role": "user", "content": analysis_prompt}
+            ],
+            temperature=0.7,
+            max_tokens=800
+        )
+        
+        analysis_text = response.choices[0].message.content.strip()
+        
+        # JSON 응답 정리
+        cleaned_json = clean_json_response(analysis_text)
+        
+        try:
+            analysis_data = json.loads(cleaned_json)
+        except json.JSONDecodeError:
+            # JSON 파싱 실패 시 기본 응답 생성
+            analysis_data = {
+                "summary": "자연스럽고 편안한 대화를 이어가셨습니다.",
+                "details": f"총 {len(messages)}개의 대화에서 자연스러운 언어 사용 패턴을 보여주셨습니다. 의사소통이 명확하고 편안한 톤을 유지하셨네요.",
+                "confidence_score": 0.8,
+                "positive_aspects": ["자연스러운 대화", "명확한 의사전달"],
+                "suggestions": ["계속해서 자신감 있게 대화하세요"]
+            }
+        
+        # 분석 결과를 사용자별 파일에 저장
+        if participant_id:
+            analysis_file = os.path.join(user_dir, f"voice_analysis_{datetime.now().strftime('%Y%m%d_%H%M%S')}.json")
+            with open(analysis_file, 'w', encoding='utf-8') as f:
+                json.dump({
+                    'participant_id': participant_id,
+                    'timestamp': datetime.now().isoformat(),
+                    'messages_count': len(messages),
+                    'analysis': analysis_data
+                }, f, ensure_ascii=False, indent=2)
+        
+        return jsonify({
+            'status': 'success',
+            'analysis': analysis_data
+        })
+        
+    except Exception as e:
+        logger.error(f"음성 분석 오류: {str(e)}")
+        return jsonify({
+            'status': 'error',
+            'error': f'음성 분석 중 오류가 발생했습니다: {str(e)}'
+        }), 500
+
 @app.route('/api/tts', methods=['POST'])
 def generate_tts():
     """ElevenLabs TTS API 호출"""
@@ -1009,6 +1128,7 @@ def generate_tts():
             "text": text,
             "model_id": "eleven_multilingual_v2",
             "voice_settings": {
+                "speed": 1.2,
                 "stability": 0.5,
                 "similarity_boost": 0.5,
                 "style": 0.0,

@@ -75,6 +75,7 @@ header p {
     flex-direction: column;
     background: #f8f9fa;
     height: 100%;
+    min-height: 0;
 }
 
 .chat-messages {
@@ -85,6 +86,7 @@ header p {
     flex-direction: column;
     gap: 15px;
     min-height: 0;
+    max-height: calc(100vh - 300px);
 }
 
 .message {
@@ -138,6 +140,9 @@ header p {
     gap: 15px;
     flex-shrink: 0;
     margin-top: auto;
+    position: sticky;
+    bottom: 0;
+    z-index: 10;
 }
 
 .text-input-container {
@@ -216,6 +221,38 @@ header p {
     font-size: 1.1rem;
 }
 
+.stop-voice-btn {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 12px 16px;
+    background: linear-gradient(135deg, #f44336 0%, #d32f2f 100%);
+    color: white;
+    border: none;
+    border-radius: 25px;
+    font-size: 1rem;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    min-width: 50px;
+}
+
+.stop-voice-btn:hover {
+    background: linear-gradient(135deg, #d32f2f 0%, #b71c1c 100%);
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(244, 67, 54, 0.3);
+}
+
+.stop-voice-btn:disabled {
+    background: #ccc;
+    cursor: not-allowed;
+    transform: none;
+    box-shadow: none;
+}
+
+.stop-icon {
+    font-size: 1.1rem;
+}
+
 .voice-status {
     font-size: 0.9rem;
     color: #666;
@@ -230,6 +267,7 @@ header p {
     display: flex;
     justify-content: space-between;
     align-items: center;
+    flex-shrink: 0;
 }
 
 .setting-group {
@@ -474,5 +512,13 @@ header p {
     
     .message {
         max-width: 85%;
+    }
+    
+    .chat-messages {
+        max-height: calc(100vh - 250px);
+    }
+    
+    .input-area {
+        padding: 15px;
     }
 } 

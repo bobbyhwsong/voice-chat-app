@@ -19,27 +19,49 @@
         
         <div class="content">
             <div class="cheatsheet-container" id="cheatsheetContainer">
-                <!-- 내가 말할 스크립트 -->
+                
+                <!-- 첫 번째 섹션: 사회적, 심리적 측면 도움 -->
+                <div class="psychological-section">
+                    <h3>💙 마음의 준비</h3>
+                    <div class="psychological-content" id="psychologicalContent">
+                        <div class="encouragement-card">
+                            <div class="encouragement-icon">🌟</div>
+                            <h4>충분한 진료는 당신의 권리입니다</h4>
+                            <p>의료진료를 받는 것은 모든 사람의 기본적인 권리입니다. 북한이탈주민이라는 점에 대해 스스로 너무 걱정하지 마세요. 의사는 환자의 건강을 돕는 것이 목적입니다.</p>
+                        </div>
+                        
+                        <div class="research-info">
+                            <h4>📚 관련 연구 및 조사</h4>
+                            <p>사람들이 생각보다 북한이탈주민에 관심이 많지 않을 수 있습니다!</p>
+                            <ul>
+                                <li><a href="https://www.kihasa.re.kr/web/publication/research/view.do?key=169" target="_blank">한국보건사회연구원 - 북한이탈주민 사회통합 실태조사</a></li>
+                                <li><a href="https://www.unikorea.go.kr/unikorea/business/statistics/" target="_blank">통일부 - 북한이탈주민 정착 지원 현황</a></li>
+                                <li><a href="https://www.korea.kr/news/pressReleaseView.do?newsId=156456789" target="_blank">정부24 - 북한이탈주민 인식 개선 캠페인</a></li>
+                            </ul>
+                        </div>
+                        
+                        <div class="voice-analysis" id="voiceAnalysis">
+                            <h4>🎤 음성 분석 결과</h4>
+                            <div class="analysis-content">
+                                <!-- 음성 분석 결과가 여기에 표시됩니다 -->
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- 두 번째 섹션: 실제 스크립트 도움 -->
                 <div class="script-section">
-                    <h3>💬 내가 말할 것</h3>
+                    <h3>💬 실제 말할 스크립트</h3>
                     <div class="script-content" id="scriptContent">
                         <!-- 실제 진료에서 말할 스크립트가 여기에 표시됩니다 -->
                     </div>
                 </div>
                 
-                <!-- 의사가 물어볼 질문들 -->
+                <!-- 무조건 들어야 하는 것 -->
                 <div class="script-section">
-                    <h3>❓ 의사가 물어볼 질문들</h3>
-                    <div class="questions-content" id="questionsContent">
-                        <!-- 의사가 물어볼 질문들과 답변 예시가 여기에 표시됩니다 -->
-                    </div>
-                </div>
-                
-                <!-- 내가 물어볼 질문들 -->
-                <div class="script-section">
-                    <h3>🤔 내가 물어볼 질문들</h3>
-                    <div class="my-questions-content" id="myQuestionsContent">
-                        <!-- 의사에게 물어볼 질문들이 여기에 표시됩니다 -->
+                    <h3>👂 무조건 들어야 하는 것</h3>
+                    <div class="listening-content" id="listeningContent">
+                        <!-- 의사가 말할 내용 중 꼭 들어야 하는 것이 여기에 표시됩니다 -->
                     </div>
                 </div>
                 
@@ -55,6 +77,12 @@
             <div class="action-buttons">
                 <button class="action-btn copy-btn" onclick="copyCheatsheet()">
                     📋 전체 복사
+                </button>
+                <button class="action-btn download-img-btn" onclick="downloadAsImage()">
+                    📸 이미지로 다운로드
+                </button>
+                <button class="action-btn download-text-btn" onclick="downloadAsText()">
+                    📄 텍스트로 다운로드
                 </button>
                 <button class="action-btn finish-btn" onclick="finishCheatsheet()">
                     🎉 완료
@@ -81,6 +109,7 @@
     </div>
     
     <script src="cheatsheet.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
     <script>
         // URL 파라미터에서 백엔드 API URL 설정
         document.addEventListener('DOMContentLoaded', function() {

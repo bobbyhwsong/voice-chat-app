@@ -26,11 +26,13 @@ async function generateDynamicCheatsheet() {
         // 로딩 표시
         showLoadingState();
         
+        // 음성 분석 먼저 수행
+        await generateVoiceAnalysis(participantId);
+        
         // LLM API 호출
-                    // API URL 동적 설정
-            const apiBaseUrl = window.API_BASE_URL || 'http://localhost:5001';
-            
-            const response = await fetch(`${apiBaseUrl}/api/generate-cheatsheet`, {
+        const apiBaseUrl = window.API_BASE_URL || 'http://localhost:5001';
+        
+        const response = await fetch(`${apiBaseUrl}/api/generate-cheatsheet`, {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json',
@@ -59,16 +61,82 @@ async function generateDynamicCheatsheet() {
     }
 }
 
+// 음성 분석 생성
+async function generateVoiceAnalysis(participantId) {
+    try {
+        const apiBaseUrl = window.API_BASE_URL || 'http://localhost:5001';
+        
+        // 대화 로그 가져오기
+        const logsResponse = await fetch(`${apiBaseUrl}/api/logs?participant_id=${participantId}&page_type=chat`);
+        const logsData = await logsResponse.json();
+        
+        if (logsData.status === 'success' && logsData.logs.length > 0) {
+            // 사용자 메시지만 추출
+            const userMessages = logsData.logs
+                .filter(log => log.user_message)
+                .map(log => log.user_message);
+            
+            // 음성 분석 API 호출
+            const analysisResponse = await fetch(`${apiBaseUrl}/api/analyze-voice`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({
+                    messages: userMessages,
+                    participant_id: participantId,
+                    analysis_type: 'voice_analysis'
+                })
+            });
+            
+            const analysisData = await analysisResponse.json();
+            
+            if (analysisData.status === 'success') {
+                displayVoiceAnalysis(analysisData.analysis);
+            }
+        }
+    } catch (error) {
+        console.error('음성 분석 오류:', error);
+    }
+}
+
+// 음성 분석 결과 표시
+function displayVoiceAnalysis(analysis) {
+    const voiceAnalysis = document.getElementById('voiceAnalysis');
+    const analysisContent = voiceAnalysis.querySelector('.analysis-content');
+    
+    let html = `
+        <div class="analysis-summary">
+            <p><strong>${analysis.summary}</strong></p>
+        </div>
+        <div class="analysis-details">
+            <p>${analysis.details}</p>
+        </div>
+        <div class="analysis-aspects">
+            <h5>👍 긍정적인 면</h5>
+            <ul>
+                ${analysis.positive_aspects.map(aspect => `<li>${aspect}</li>`).join('')}
+            </ul>
+        </div>
+        <div class="analysis-suggestions">
+            <h5>💡 제안사항</h5>
+            <ul>
+                ${analysis.suggestions.map(suggestion => `<li>${suggestion}</li>`).join('')}
+            </ul>
+        </div>
+    `;
+    
+    analysisContent.innerHTML = html;
+}
+
 // 로딩 상태 표시
 function showLoadingState() {
     const scriptContent = document.getElementById('scriptContent');
-    const questionsContent = document.getElementById('questionsContent');
-    const myQuestionsContent = document.getElementById('myQuestionsContent');
+    const listeningContent = document.getElementById('listeningContent');
     const precautionsContent = document.getElementById('precautionsContent');
     
     scriptContent.innerHTML = '<div style="text-align: center; padding: 40px; color: #666;">AI가 맞춤형 스크립트를 생성하고 있습니다...</div>';
-    questionsContent.innerHTML = '<div style="text-align: center; padding: 20px; color: #666;">생성 중...</div>';
-    myQuestionsContent.innerHTML = '<div style="text-align: center; padding: 20px; color: #666;">생성 중...</div>';
+    listeningContent.innerHTML = '<div style="text-align: center; padding: 20px; color: #666;">생성 중...</div>';
     precautionsContent.innerHTML = '<div style="text-align: center; padding: 20px; color: #666;">생성 중...</div>';
 }
 
@@ -79,11 +147,8 @@ function displayCheatsheet(cheatsheetData) {
     // 스크립트 표시
     displayScript(cheatsheet.script);
     
-    // 질문과 답변 표시
-    displayQuestions(cheatsheet.questions);
-    
-    // 내 질문 표시
-    displayMyQuestions(cheatsheet.my_questions);
+    // 들어야 하는 것 표시
+    displayListening(cheatsheet.listening);
     
     // 주의사항 표시
     displayPrecautions(cheatsheet.precautions);
@@ -98,12 +163,14 @@ function displayScript(script) {
         return;
     }
     
-    let html = '';
+    let html = '<div class="script-intro"><h4>🎯 무조건 말해야 하는 것 (5개)</h4></div>';
     script.forEach((item, index) => {
         html += `
             <div class="script-item">
-                <h4>${item.title || `스크립트 ${index + 1}`}</h4>
-                <p>${item.content}</p>
+                <h4>${item.title || `핵심 ${index + 1}`}</h4>
+                <div class="script-content">
+                    <p class="actual-script">${item.content}</p>
+                </div>
             </div>
         `;
     });
@@ -111,49 +178,28 @@ function displayScript(script) {
     scriptContent.innerHTML = html;
 }
 
-// 질문과 답변 표시
-function displayQuestions(questions) {
-    const questionsContent = document.getElementById('questionsContent');
+// 들어야 하는 것 표시
+function displayListening(listening) {
+    const listeningContent = document.getElementById('listeningContent');
     
-    if (!questions || questions.length === 0) {
-        questionsContent.innerHTML = '<div class="question-item"><p>생성된 질문이 없습니다.</p></div>';
+    if (!listening || listening.length === 0) {
+        listeningContent.innerHTML = '<div class="listening-item"><p>생성된 내용이 없습니다.</p></div>';
         return;
     }
     
-    let html = '';
-    questions.forEach((item, index) => {
+    let html = '<div class="listening-intro"><h4>🎯 무조건 들어야 하는 것 (5개)</h4></div>';
+    listening.forEach((item, index) => {
         html += `
-            <div class="question-item">
-                <h4>${item.title || `질문 ${index + 1}`}</h4>
-                <div class="question">${item.question}</div>
-                ${item.answer ? `<div class="answer">${item.answer}</div>` : ''}
+            <div class="listening-item">
+                <h4>${item.title || `핵심 ${index + 1}`}</h4>
+                <div class="listening-content">
+                    <p class="doctor-script">${item.content}</p>
+                </div>
             </div>
         `;
     });
     
-    questionsContent.innerHTML = html;
-}
-
-// 내 질문 표시
-function displayMyQuestions(myQuestions) {
-    const myQuestionsContent = document.getElementById('myQuestionsContent');
-    
-    if (!myQuestions || myQuestions.length === 0) {
-        myQuestionsContent.innerHTML = '<div class="my-question-item"><p>생성된 질문이 없습니다.</p></div>';
-        return;
-    }
-    
-    let html = '';
-    myQuestions.forEach((item, index) => {
-        html += `
-            <div class="my-question-item">
-                <h4>${item.title || `내 질문 ${index + 1}`}</h4>
-                <div class="question">${item.question}</div>
-            </div>
-        `;
-    });
-    
-    myQuestionsContent.innerHTML = html;
+    listeningContent.innerHTML = html;
 }
 
 // 주의사항 표시
@@ -181,53 +227,49 @@ function displayPrecautions(precautions) {
 // 기본 치트시트 표시
 function showDefaultCheatsheet() {
     const scriptContent = document.getElementById('scriptContent');
-    const questionsContent = document.getElementById('questionsContent');
-    const myQuestionsContent = document.getElementById('myQuestionsContent');
+    const listeningContent = document.getElementById('listeningContent');
     const precautionsContent = document.getElementById('precautionsContent');
     
     scriptContent.innerHTML = `
+        <div class="script-intro"><h4>🎯 무조건 말해야 하는 것 (5개)</h4></div>
         <div class="script-item">
-            <h4>기본 인사말</h4>
-            <p>"안녕하세요, 의사선생님. 저는 [이름]입니다. 오늘 [증상] 때문에 방문했습니다."</p>
+            <h4>증상 위치</h4>
+            <div class="script-content">
+                <p class="actual-script">어디가 아픈지 구체적으로 말씀드리겠습니다.</p>
+            </div>
         </div>
         <div class="script-item">
-            <h4>증상 설명</h4>
-            <p>"[증상]이 [언제부터] 시작되어서 [어떤 정도]로 나타나고 있습니다."</p>
+            <h4>증상 시작 시기</h4>
+            <div class="script-content">
+                <p class="actual-script">언제부터 아픈지 정확히 말씀드리겠습니다.</p>
+            </div>
         </div>
     `;
     
-    questionsContent.innerHTML = `
-        <div class="question-item">
-            <h4>증상 관련 질문</h4>
-            <div class="question">"언제부터 증상이 나타났나요?"</div>
-            <div class="answer">"약 [시간/일] 전부터 시작되었습니다."</div>
+    listeningContent.innerHTML = `
+        <div class="listening-intro"><h4>🎯 무조건 들어야 하는 것 (5개)</h4></div>
+        <div class="listening-item">
+            <h4>진단명과 근거</h4>
+            <div class="listening-content">
+                <p class="doctor-script">진단명과 그 근거를 설명드리겠습니다.</p>
+            </div>
         </div>
-        <div class="question-item">
-            <h4>통증 관련 질문</h4>
-            <div class="question">"통증의 정도는 어느 정도인가요?"</div>
-            <div class="answer">"10점 만점에 약 [숫자]점 정도입니다."</div>
-        </div>
-    `;
-    
-    myQuestionsContent.innerHTML = `
-        <div class="my-question-item">
-            <h4>치료 관련 질문</h4>
-            <div class="question">"이 병은 얼마나 오래 치료해야 하나요?"</div>
-        </div>
-        <div class="my-question-item">
-            <h4>생활 관리 질문</h4>
-            <div class="question">"일상생활에서 주의해야 할 점이 있나요?"</div>
+        <div class="listening-item">
+            <h4>처방약 정보</h4>
+            <div class="listening-content">
+                <p class="doctor-script">처방약의 이름과 복용 방법을 설명드리겠습니다.</p>
+            </div>
         </div>
     `;
     
     precautionsContent.innerHTML = `
         <div class="precautions-item">
-            <h4>약물 복용 주의사항</h4>
-            <p>처방받은 약을 정확한 시간에 복용하고, 부작용이 나타나면 즉시 의료진에 연락하세요.</p>
+            <h4>의사소통 주의사항</h4>
+            <p>의사의 설명이 이해되지 않으면 반드시 다시 물어보세요.</p>
         </div>
         <div class="precautions-item">
-            <h4>증상 악화 시 대응</h4>
-            <p>증상이 악화되거나 새로운 증상이 나타나면 즉시 병원을 방문하세요.</p>
+            <h4>약물 복용 주의사항</h4>
+            <p>약을 복용하기 전에 부작용을 꼭 확인하세요.</p>
         </div>
     `;
 }
@@ -249,6 +291,196 @@ function copyCheatsheet() {
         document.body.removeChild(textArea);
         showNotification('전체 내용이 클립보드에 복사되었습니다.', 'success');
     });
+}
+
+// 이미지로 다운로드
+async function downloadAsImage() {
+    try {
+        showNotification('이미지 생성 중입니다...', 'info');
+        
+        const cheatsheetContainer = document.getElementById('cheatsheetContainer');
+        
+        // 스크롤 위치 저장
+        const originalScrollTop = window.scrollY;
+        
+        // 컨테이너를 화면 상단으로 스크롤
+        cheatsheetContainer.scrollIntoView({ behavior: 'instant' });
+        
+        // 잠시 대기하여 스크롤 완료
+        await new Promise(resolve => setTimeout(resolve, 500));
+        
+        // html2canvas 옵션 설정
+        const options = {
+            scale: 2, // 고해상도
+            useCORS: true,
+            allowTaint: true,
+            backgroundColor: '#ffffff',
+            width: cheatsheetContainer.offsetWidth,
+            height: cheatsheetContainer.offsetHeight,
+            scrollX: 0,
+            scrollY: 0
+        };
+        
+        // 이미지 생성
+        const canvas = await html2canvas(cheatsheetContainer, options);
+        
+        // 이미지를 blob으로 변환
+        canvas.toBlob((blob) => {
+            // 다운로드 링크 생성
+            const url = URL.createObjectURL(blob);
+            const link = document.createElement('a');
+            link.href = url;
+            
+            // 파일명 생성 (현재 날짜 포함)
+            const now = new Date();
+            const dateStr = now.getFullYear() + 
+                           String(now.getMonth() + 1).padStart(2, '0') + 
+                           String(now.getDate()).padStart(2, '0') + '_' +
+                           String(now.getHours()).padStart(2, '0') + 
+                           String(now.getMinutes()).padStart(2, '0');
+            
+            link.download = `진료스크립트_${dateStr}.png`;
+            
+            // 다운로드 실행
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+            
+            // 메모리 정리
+            URL.revokeObjectURL(url);
+            
+            // 원래 스크롤 위치로 복원
+            window.scrollTo(0, originalScrollTop);
+            
+            showNotification('이미지가 성공적으로 다운로드되었습니다.', 'success');
+        }, 'image/png');
+        
+    } catch (error) {
+        console.error('이미지 다운로드 오류:', error);
+        showNotification('이미지 다운로드 중 오류가 발생했습니다.', 'error');
+    }
+}
+
+// 텍스트로 다운로드
+function downloadAsText() {
+    try {
+        const cheatsheetContainer = document.getElementById('cheatsheetContainer');
+        
+        // 구조화된 텍스트 생성
+        let textContent = '📋 진료 스크립트\n';
+        textContent += '='.repeat(50) + '\n\n';
+        
+        // 심리적 섹션
+        const psychologicalSection = cheatsheetContainer.querySelector('.psychological-section');
+        if (psychologicalSection) {
+            textContent += '💙 마음의 준비\n';
+            textContent += '-'.repeat(30) + '\n';
+            
+            const encouragementCard = psychologicalSection.querySelector('.encouragement-card');
+            if (encouragementCard) {
+                const title = encouragementCard.querySelector('h4');
+                const content = encouragementCard.querySelector('p');
+                if (title) textContent += title.textContent + '\n';
+                if (content) textContent += content.textContent + '\n\n';
+            }
+            
+            const researchInfo = psychologicalSection.querySelector('.research-info');
+            if (researchInfo) {
+                const title = researchInfo.querySelector('h4');
+                const content = researchInfo.querySelector('p');
+                if (title) textContent += title.textContent + '\n';
+                if (content) textContent += content.textContent + '\n\n';
+            }
+            
+            const voiceAnalysis = psychologicalSection.querySelector('.voice-analysis');
+            if (voiceAnalysis) {
+                const analysisContent = voiceAnalysis.querySelector('.analysis-content');
+                if (analysisContent) {
+                    textContent += '🎤 음성 분석 결과\n';
+                    textContent += analysisContent.textContent + '\n\n';
+                }
+            }
+        }
+        
+        // 스크립트 섹션
+        const scriptSection = cheatsheetContainer.querySelector('.script-section');
+        if (scriptSection) {
+            textContent += '💬 실제 말할 스크립트\n';
+            textContent += '-'.repeat(30) + '\n';
+            
+            const scriptItems = scriptSection.querySelectorAll('.script-item');
+            scriptItems.forEach((item, index) => {
+                const title = item.querySelector('h4');
+                const actualScript = item.querySelector('.actual-script');
+                
+                if (title) textContent += `${index + 1}. ${title.textContent}\n`;
+                if (actualScript) textContent += `   ${actualScript.textContent}\n`;
+                textContent += '\n';
+            });
+        }
+        
+        // 들어야 하는 것 섹션
+        const listeningSection = cheatsheetContainer.querySelectorAll('.script-section')[1];
+        if (listeningSection) {
+            textContent += '👂 무조건 들어야 하는 것\n';
+            textContent += '-'.repeat(30) + '\n';
+            
+            const listeningItems = listeningSection.querySelectorAll('.listening-item');
+            listeningItems.forEach((item, index) => {
+                const title = item.querySelector('h4');
+                const doctorScript = item.querySelector('.doctor-script');
+                
+                if (title) textContent += `${index + 1}. ${title.textContent}\n`;
+                if (doctorScript) textContent += `   ${doctorScript.textContent}\n`;
+                textContent += '\n';
+            });
+        }
+        
+        // 주의사항 섹션
+        const precautionsSection = cheatsheetContainer.querySelectorAll('.script-section')[2];
+        if (precautionsSection) {
+            textContent += '⚠️ 주의사항\n';
+            textContent += '-'.repeat(30) + '\n';
+            
+            const precautionsItems = precautionsSection.querySelectorAll('.precautions-item');
+            precautionsItems.forEach((item, index) => {
+                const title = item.querySelector('h4');
+                const content = item.querySelector('p');
+                
+                if (title) textContent += `${index + 1}. ${title.textContent}\n`;
+                if (content) textContent += `   ${content.textContent}\n`;
+                textContent += '\n';
+            });
+        }
+        
+        // 파일명 생성
+        const now = new Date();
+        const dateStr = now.getFullYear() + 
+                       String(now.getMonth() + 1).padStart(2, '0') + 
+                       String(now.getDate()).padStart(2, '0') + '_' +
+                       String(now.getHours()).padStart(2, '0') + 
+                       String(now.getMinutes()).padStart(2, '0');
+        
+        // 다운로드 실행
+        const blob = new Blob([textContent], { type: 'text/plain;charset=utf-8' });
+        const url = URL.createObjectURL(blob);
+        const link = document.createElement('a');
+        link.href = url;
+        link.download = `진료스크립트_${dateStr}.txt`;
+        
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+        
+        // 메모리 정리
+        URL.revokeObjectURL(url);
+        
+        showNotification('텍스트 파일이 성공적으로 다운로드되었습니다.', 'success');
+        
+    } catch (error) {
+        console.error('텍스트 다운로드 오류:', error);
+        showNotification('텍스트 다운로드 중 오류가 발생했습니다.', 'error');
+    }
 }
 
 // 텍스트 내용 추출
